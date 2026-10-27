@@ -2,11 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { api } from './services/api';
 import { connectSSE, SSEConnectionStatus } from './services/sse';
-import { EarthquakeEvent, KpiData, StatsResponse, AiReport } from './types';
+import { EarthquakeEvent, KpiData, StatsResponse, AiReport, SeismicAnomaly } from './types';
 import { Navbar } from './components/Navbar';
 import { KpiCards } from './components/KpiCards';
 import { FiltersBar } from './components/FiltersBar';
 import { SeismicMap } from './components/SeismicMap';
+import { LiveEventsFeed } from './components/LiveEventsFeed';
 import { AnalyticsCharts } from './components/AnalyticsCharts';
 import { EventsTable } from './components/EventsTable';
 import { AiReportCard } from './components/AiReportCard';
@@ -14,39 +15,42 @@ import { QualityPanel } from './components/QualityPanel';
 import { LineagePanel } from './components/LineagePanel';
 import { AiQueryModal } from './components/AiQueryModal';
 import { LoginModal } from './components/LoginModal';
-import { LoadingState, ErrorState } from './components/States';
+import { LandingPage } from './components/LandingPage';
+import { BarChart3, Bot, ShieldCheck, ListFilter } from 'lucide-react';
 
 const DashboardContent: React.FC = () => {
-  const { token, user } = useAuth();
+  const { token, isAuthenticated, setShowLoginModal } = useAuth();
   const [connectionStatus, setConnectionStatus] = useState<SSEConnectionStatus>('disconnected');
   const [activeTab, setActiveTab] = useState<'dashboard' | 'lineage'>('dashboard');
+  const [activeAnalyticsSubTab, setActiveAnalyticsSubTab] = useState<'charts' | 'ai' | 'quality' | 'table'>('charts');
   const [isAiQueryOpen, setIsAiQueryOpen] = useState(false);
 
   // Filters State
   const [timeRange, setTimeRange] = useState('24h');
   const [minMagnitude, setMinMagnitude] = useState(0);
   const [searchRegion, setSearchRegion] = useState('');
+  const [onlyTsunami, setOnlyTsunami] = useState(false);
 
   // Data State
   const [kpis, setKpis] = useState<KpiData | null>(null);
   const [events, setEvents] = useState<EarthquakeEvent[]>([]);
-  const [anomalies, setAnomalies] = useState<any[]>([]);
+  const [anomalies, setAnomalies] = useState<SeismicAnomaly[]>([]);
   const [totalEvents, setTotalEvents] = useState(0);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [stats, setStats] = useState<StatsResponse | null>(null);
   const [report, setReport] = useState<AiReport | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<EarthquakeEvent | null>(null);
 
   // UI State
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   // Fetch Core Data
   const loadDashboardData = useCallback(async () => {
+    if (!token) return;
     setLoading(true);
-    setError(null);
+
     try {
-      // 1. Calculate time filters
       let hours = 24;
       if (timeRange === '1h') hours = 1;
       if (timeRange === '7d') hours = 168;
@@ -58,10 +62,11 @@ const DashboardContent: React.FC = () => {
         api.getKpis(),
         api.getEvents({
           page,
-          limit: 10,
+          limit: 15,
           min_magnitude: minMagnitude > 0 ? minMagnitude : undefined,
           start_time: startTime,
           search: searchRegion.trim() || undefined,
+          has_tsunami: onlyTsunami,
         }),
         api.getStats(hours),
         api.getLatestReport(),
@@ -78,11 +83,11 @@ const DashboardContent: React.FC = () => {
       if (reportRes.status === 'fulfilled') setReport(reportRes.value);
       if (anomRes.status === 'fulfilled') setAnomalies(anomRes.value);
     } catch (err: any) {
-      setError(err.message || 'Error al conectar con la API');
+      console.error('Error fetching dashboard data', err);
     } finally {
       setLoading(false);
     }
-  }, [timeRange, minMagnitude, searchRegion, page]);
+  }, [token, timeRange, minMagnitude, searchRegion, onlyTsunami, page]);
 
   useEffect(() => {
     loadDashboardData();
@@ -100,18 +105,16 @@ const DashboardContent: React.FC = () => {
       (ssePayload) => {
         if (ssePayload.type === 'NEW_EARTHQUAKE' && ssePayload.event) {
           const newEvt = ssePayload.event;
-          // Prepend new earthquake into events list
-          setEvents((prev) => [newEvt, ...prev.slice(0, 9)]);
+          setEvents((prev) => [newEvt, ...prev.slice(0, 14)]);
           setTotalEvents((prev) => prev + 1);
 
-          // Update KPIs dynamically
           setKpis((prev) => {
             if (!prev) return null;
             return {
               ...prev,
               total_events_24h: prev.total_events_24h + 1,
-              max_magnitude_24h: Math.max(prev.max_magnitude_24h || 0, newEvt.mag),
-              tsunami_alerts_24h: prev.tsunami_alerts_24h + (newEvt.tsunami ? 1 : 0),
+              max_magnitude: Math.max(prev.max_magnitude || 0, newEvt.mag),
+              tsunami_alerts_count: prev.tsunami_alerts_count + (newEvt.tsunami ? 1 : 0),
             };
           });
         }
@@ -122,110 +125,169 @@ const DashboardContent: React.FC = () => {
     return cleanup;
   }, [token]);
 
+  // If user is not authenticated, render visitor Landing Page
+  if (!isAuthenticated) {
+    return (
+      <>
+        <LandingPage onOpenLogin={() => setShowLoginModal(true)} />
+        <LoginModal />
+      </>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-dark-950 text-slate-100 flex flex-col font-sans">
+      {/* Top Navbar */}
       <Navbar
-        connectionStatus={connectionStatus}
-        onOpenAiQuery={() => setIsAiQueryOpen(true)}
         activeTab={activeTab}
         onTabChange={setActiveTab}
+        onOpenAiQuery={() => setIsAiQueryOpen(true)}
+        connectionStatus={connectionStatus}
       />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      {/* Main Container */}
+      <main className="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-6">
         {activeTab === 'lineage' ? (
           <LineagePanel />
         ) : (
           <>
-            {/* KPI Summary Cards */}
+            {/* 1. Hero / Resumen: KPIs Esenciales */}
             <KpiCards kpis={kpis} loading={loading} />
 
-            {/* Filters Toolbar */}
+            {/* 2. Barra Unificada de Filtros */}
             <FiltersBar
               timeRange={timeRange}
-              onTimeRangeChange={(r) => {
-                setTimeRange(r);
-                setPage(1);
-              }}
+              onTimeRangeChange={setTimeRange}
               minMagnitude={minMagnitude}
-              onMinMagnitudeChange={(m) => {
-                setMinMagnitude(m);
-                setPage(1);
-              }}
+              onMinMagnitudeChange={setMinMagnitude}
               searchRegion={searchRegion}
-              onSearchRegionChange={(s) => {
-                setSearchRegion(s);
-                setPage(1);
-              }}
+              onSearchRegionChange={setSearchRegion}
+              onlyTsunami={onlyTsunami}
+              onOnlyTsunamiChange={setOnlyTsunami}
               onRefresh={loadDashboardData}
               loading={loading}
             />
 
-            {error && (
-              <ErrorState
-                title="Error de sincronización"
-                message={error}
-                onRetry={loadDashboardData}
-              />
-            )}
-
-            {/* Map & Live Visualizer with Swarms Layer */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                  Cartografía Sísmica Georreferenciada (USGS) & Detección de Enjambres
-                </h2>
-                <span className="text-[11px] text-slate-500">
-                  {events.length} sismos mostrados en mapa
-                </span>
+            {/* 3. Zona de Operaciones: Mapa (60%) + Feed en Vivo (40%) */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+              <div className="lg:col-span-7 w-full">
+                <SeismicMap
+                  events={events}
+                  anomalies={anomalies}
+                  selectedEvent={selectedEvent}
+                  onSelectEvent={setSelectedEvent}
+                />
               </div>
-              <SeismicMap events={events} anomalies={anomalies} />
+
+              <div className="lg:col-span-5 w-full">
+                <LiveEventsFeed
+                  events={events}
+                  connectionStatus={connectionStatus}
+                  selectedEventId={selectedEvent?.id}
+                  onSelectEvent={setSelectedEvent}
+                />
+              </div>
             </div>
 
-            {/* Recharts Analytics Charts */}
-            <AnalyticsCharts stats={stats} loading={loading} />
+            {/* 4. Sección Analítica Consolidada con Sub-Tabs */}
+            <div className="space-y-4 pt-2">
+              <div className="flex items-center gap-2 border-b border-white/10 pb-3">
+                <button
+                  onClick={() => setActiveAnalyticsSubTab('charts')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all ${
+                    activeAnalyticsSubTab === 'charts'
+                      ? 'bg-cobalt-500 text-white shadow-glow-cobalt'
+                      : 'bg-dark-900 text-slate-400 hover:text-white border border-white/5'
+                  }`}
+                >
+                  <BarChart3 className="w-3.5 h-3.5" />
+                  <span>Distribución & Tendencias</span>
+                </button>
 
-            {/* Events Table */}
-            <EventsTable
-              events={events}
-              total={totalEvents}
-              page={page}
-              limit={10}
-              totalPages={totalPages}
-              onPageChange={setPage}
-              loading={loading}
-            />
+                <button
+                  onClick={() => setActiveAnalyticsSubTab('ai')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all ${
+                    activeAnalyticsSubTab === 'ai'
+                      ? 'bg-cobalt-500 text-white shadow-glow-cobalt'
+                      : 'bg-dark-900 text-slate-400 hover:text-white border border-white/5'
+                  }`}
+                >
+                  <Bot className="w-3.5 h-3.5" />
+                  <span>Boletín Ejecutivo IA</span>
+                </button>
 
-            {/* AI Executive Report View */}
-            <AiReportCard report={report} loading={loading} />
+                <button
+                  onClick={() => setActiveAnalyticsSubTab('quality')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all ${
+                    activeAnalyticsSubTab === 'quality'
+                      ? 'bg-cobalt-500 text-white shadow-glow-cobalt'
+                      : 'bg-dark-900 text-slate-400 hover:text-white border border-white/5'
+                  }`}
+                >
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>Quality Gate & Cuarentena</span>
+                </button>
 
-            {/* Data Quality & Quarantine (RBAC) */}
-            <QualityPanel />
+                <button
+                  onClick={() => setActiveAnalyticsSubTab('table')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all ${
+                    activeAnalyticsSubTab === 'table'
+                      ? 'bg-cobalt-500 text-white shadow-glow-cobalt'
+                      : 'bg-dark-900 text-slate-400 hover:text-white border border-white/5'
+                  }`}
+                >
+                  <ListFilter className="w-3.5 h-3.5" />
+                  <span>Registro Tabular ({totalEvents})</span>
+                </button>
+              </div>
+
+              {/* Sub-tab views */}
+              {activeAnalyticsSubTab === 'charts' && (
+                <AnalyticsCharts stats={stats} loading={loading} />
+              )}
+
+              {activeAnalyticsSubTab === 'ai' && (
+                <AiReportCard report={report} loading={loading} />
+              )}
+
+              {activeAnalyticsSubTab === 'quality' && (
+                <QualityPanel />
+              )}
+
+              {activeAnalyticsSubTab === 'table' && (
+                <EventsTable
+                  events={events}
+                  total={totalEvents}
+                  page={page}
+                  limit={15}
+                  totalPages={totalPages}
+                  onPageChange={setPage}
+                  loading={loading}
+                />
+              )}
+            </div>
           </>
         )}
       </main>
 
       {/* Footer */}
-      <footer className="bg-slate-900 border-t border-slate-800 py-6 text-center text-xs text-slate-500">
-        <p>
-          SismoWatch PDD — Plataforma de IA & Automatización para Mitigación Sísmica en SuperApp.
-        </p>
-        <p className="mt-1 text-[11px] text-slate-600">
-          PostgreSQL 16 Medallion · Apache Airflow 2.8.1 · Pandera Quarantine · Gemini 3.8 Flash & Groq Fallback · FastAPI SSE · React Leaflet
-        </p>
+      <footer className="border-t border-white/5 py-4 px-6 text-center text-xs font-mono text-slate-500 bg-dark-950">
+        SismoWatch PDD &bull; Arquitectura Medallion &bull; PostgreSQL 16 &bull; Airflow 2.8.1 &bull; FastAPI SSE &bull; React 18 Leaflet
       </footer>
 
       {/* Modals */}
-      <LoginModal />
       <AiQueryModal isOpen={isAiQueryOpen} onClose={() => setIsAiQueryOpen(false)} />
+      <LoginModal />
     </div>
   );
 };
 
-export default function App() {
+export const App: React.FC = () => {
   return (
     <AuthProvider>
       <DashboardContent />
     </AuthProvider>
   );
-}
+};
 
+export default App;

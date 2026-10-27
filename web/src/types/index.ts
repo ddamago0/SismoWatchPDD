@@ -18,27 +18,25 @@ export interface EarthquakeEvent {
   updated: string;
   url: string;
   detail: string;
-  felt: number | null;
-  cdi: number | null;
-  mmi: number | null;
-  alert: string | null;
+  felt?: number | null;
+  cdi?: number | null;
+  mmi?: number | null;
+  alert?: string | null;
   status: string;
   tsunami: number;
   sig: number;
   net: string;
   code: string;
-  sources: string;
-  nst: number | null;
-  dmin: number | null;
-  rms: number | null;
-  gap: number | null;
+  sources?: string;
   mag_type: string;
   type: string;
   title: string;
   longitude: number;
   latitude: number;
   depth_km: number;
-  ingestion_timestamp: string;
+  is_validated?: boolean;
+  batch_id?: string;
+  curated_at?: string;
 }
 
 export interface EventsResponse {
@@ -51,12 +49,16 @@ export interface EventsResponse {
 
 export interface KpiData {
   total_events_24h: number;
-  max_magnitude_24h: number | null;
-  avg_magnitude_24h: number | null;
-  tsunami_alerts_24h: number;
-  high_energy_count_24h: number;
-  data_quality_score: number;
-  last_updated: string;
+  max_magnitude: number | null;
+  max_magnitude_24h?: number | null;
+  avg_magnitude: number | null;
+  avg_magnitude_24h?: number | null;
+  tsunami_alerts_count: number;
+  tsunami_alerts_24h?: number;
+  quality_score: number;
+  data_quality_score?: number;
+  latest_update?: string;
+  last_updated?: string;
 }
 
 export interface TimelinePoint {
@@ -112,4 +114,20 @@ export interface SqlQueryResult {
   columns: string[];
   data: Record<string, any>[];
   row_count: number;
+}
+
+export interface SeismicAnomaly {
+  id: number;
+  type: string;
+  region: string;
+  event_id?: string;
+  cluster_size?: number;
+  latitude?: number;
+  longitude?: number;
+  radius_km?: number;
+  z_score?: number;
+  max_magnitude?: number;
+  severity: string;
+  explanation: string;
+  detected_at: string;
 }

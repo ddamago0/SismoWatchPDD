@@ -22,7 +22,7 @@ interface AnalyticsChartsProps {
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-slate-900 border border-slate-700 p-2.5 rounded-lg shadow-xl text-xs">
+      <div className="bg-dark-950 border border-white/10 p-2.5 rounded-xl shadow-2xl text-xs font-mono">
         <p className="font-bold text-white mb-1">{label}</p>
         {payload.map((entry: any, index: number) => (
           <p key={index} style={{ color: entry.color }} className="font-medium">
@@ -40,7 +40,7 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ stats, loading
     return (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {[...Array(3)].map((_, i) => (
-          <div key={i} className="h-64 bg-slate-900/50 rounded-xl border border-slate-800 animate-pulse" />
+          <div key={i} className="h-64 bg-dark-900 rounded-2xl border border-white/5 animate-pulse" />
         ))}
       </div>
     );
@@ -52,7 +52,7 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ stats, loading
 
   const magColors: Record<string, string> = {
     '< 3.0': '#10b981',
-    '3.0 - 4.5': '#eab308',
+    '3.0 - 4.5': '#f59e0b',
     '4.5 - 6.0': '#f97316',
     '>= 6.0': '#ef4444',
   };
@@ -60,21 +60,21 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ stats, loading
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
       {/* 1. Timeline Chart */}
-      <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-xl p-4 shadow-sm">
+      <div className="bg-dark-900/90 backdrop-blur-md border border-white/10 rounded-2xl p-4 shadow-xl">
         <div className="flex items-center gap-2 mb-3">
-          <div className="p-1.5 bg-indigo-500/10 text-indigo-400 rounded-lg">
+          <div className="p-1.5 bg-cobalt-500/10 text-cobalt-400 rounded-xl border border-cobalt-500/20">
             <TrendingUp className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-xs font-bold text-white uppercase tracking-wider">
+            <h3 className="text-xs font-mono font-bold text-white uppercase tracking-wider">
               Frecuencia Temporal
             </h3>
-            <p className="text-[10px] text-slate-400">Sismos acumulados por intervalo de tiempo</p>
+            <p className="text-[10px] text-slate-400 font-mono">Eventos por intervalo horario</p>
           </div>
         </div>
         <div className="h-56 w-full">
           {timelineData.length === 0 ? (
-            <div className="h-full flex items-center justify-center text-xs text-slate-500">
+            <div className="h-full flex items-center justify-center text-xs font-mono text-slate-500">
               Sin datos temporales en este rango
             </div>
           ) : (
@@ -82,8 +82,8 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ stats, loading
               <AreaChart data={timelineData}>
                 <defs>
                   <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.4} />
-                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0.0} />
+                    <stop offset="5%" stopColor="#0052ff" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="#0052ff" stopOpacity={0.0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
@@ -99,7 +99,7 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ stats, loading
                   type="monotone"
                   dataKey="count"
                   name="Eventos"
-                  stroke="#6366f1"
+                  stroke="#0052ff"
                   strokeWidth={2}
                   fillOpacity={1}
                   fill="url(#colorCount)"
@@ -110,23 +110,23 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ stats, loading
         </div>
       </div>
 
-      {/* 2. Magnitude Distribution Histogram */}
-      <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-xl p-4 shadow-sm">
+      {/* 2. Magnitude Distribution */}
+      <div className="bg-dark-900/90 backdrop-blur-md border border-white/10 rounded-2xl p-4 shadow-xl">
         <div className="flex items-center gap-2 mb-3">
-          <div className="p-1.5 bg-amber-500/10 text-amber-400 rounded-lg">
+          <div className="p-1.5 bg-amber-500/10 text-amber-400 rounded-xl border border-amber-500/20">
             <BarChart3 className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-xs font-bold text-white uppercase tracking-wider">
+            <h3 className="text-xs font-mono font-bold text-white uppercase tracking-wider">
               Distribución de Magnitud
             </h3>
-            <p className="text-[10px] text-slate-400">Conteo por severidad energética</p>
+            <p className="text-[10px] text-slate-400 font-mono">Conteo por severidad energética</p>
           </div>
         </div>
         <div className="h-56 w-full">
           {magnitudeData.length === 0 ? (
-            <div className="h-full flex items-center justify-center text-xs text-slate-500">
-              Sin datos de magnitud
+            <div className="h-full flex items-center justify-center text-xs font-mono text-slate-500">
+              Sin datos de magnitud en este rango
             </div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
@@ -135,11 +135,11 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ stats, loading
                 <XAxis dataKey="bucket" stroke="#64748b" fontSize={10} />
                 <YAxis stroke="#64748b" fontSize={10} allowDecimals={false} />
                 <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="count" name="Sismos" radius={[4, 4, 0, 0]}>
+                <Bar dataKey="count" name="Sismos" radius={[6, 6, 0, 0]}>
                   {magnitudeData.map((entry, index) => (
                     <Cell
                       key={`cell-${index}`}
-                      fill={magColors[entry.bucket] || '#6366f1'}
+                      fill={magColors[entry.bucket] || '#0052ff'}
                     />
                   ))}
                 </Bar>
@@ -150,48 +150,46 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ stats, loading
       </div>
 
       {/* 3. Top Active Regions */}
-      <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-xl p-4 shadow-sm">
+      <div className="bg-dark-900/90 backdrop-blur-md border border-white/10 rounded-2xl p-4 shadow-xl">
         <div className="flex items-center gap-2 mb-3">
-          <div className="p-1.5 bg-rose-500/10 text-rose-400 rounded-lg">
+          <div className="p-1.5 bg-coral-500/10 text-coral-400 rounded-xl border border-coral-500/20">
             <MapPin className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-xs font-bold text-white uppercase tracking-wider">
+            <h3 className="text-xs font-mono font-bold text-white uppercase tracking-wider">
               Top Regiones Activas
             </h3>
-            <p className="text-[10px] text-slate-400">Zonas geográficas de mayor recurrencia</p>
+            <p className="text-[10px] text-slate-400 font-mono">Zonas geográficas de mayor recurrencia</p>
           </div>
         </div>
-        <div className="h-56 w-full">
+        <div className="h-56 w-full overflow-y-auto space-y-2 pr-1">
           {regionsData.length === 0 ? (
-            <div className="h-full flex items-center justify-center text-xs text-slate-500">
-              Sin datos regionales
+            <div className="h-full flex items-center justify-center text-xs font-mono text-slate-500">
+              Sin datos de regiones
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={regionsData.slice(0, 5)}
-                layout="vertical"
-                margin={{ left: 20 }}
+            regionsData.map((reg, idx) => (
+              <div
+                key={idx}
+                className="flex items-center justify-between p-2 rounded-xl bg-dark-950 border border-white/5 text-xs font-mono"
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                <XAxis type="number" stroke="#64748b" fontSize={10} allowDecimals={false} />
-                <YAxis
-                  type="category"
-                  dataKey="region"
-                  stroke="#64748b"
-                  fontSize={9}
-                  width={90}
-                  tickFormatter={(val) => (val.length > 14 ? `${val.slice(0, 14)}...` : val)}
-                />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="count" name="Eventos" fill="#818cf8" radius={[0, 4, 4, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="w-4 h-4 rounded-full bg-white/5 text-[10px] flex items-center justify-center text-slate-400 flex-shrink-0">
+                    {idx + 1}
+                  </span>
+                  <span className="text-slate-200 truncate">{reg.region}</span>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <span className="text-slate-400 text-[10px]">Mw ~{reg.avg_magnitude.toFixed(1)}</span>
+                  <span className="px-2 py-0.5 rounded-md bg-cobalt-500/15 text-cobalt-400 font-bold text-[10px] border border-cobalt-500/30">
+                    {reg.count}
+                  </span>
+                </div>
+              </div>
+            ))
           )}
         </div>
       </div>
     </div>
   );
 };
-

@@ -29,3 +29,4 @@ zip -r "$OUTPUT_ZIP" . \
 
 echo "✅ Paquete generado exitosamente: $OUTPUT_ZIP ($(du -h "$OUTPUT_ZIP" | cut -f1))"
 echo "👉 Puedes subir este archivo directamente a Moodle como entrega final."
+

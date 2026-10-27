@@ -6,6 +6,7 @@ import {
   AiReport,
   QuarantineRecord,
   SqlQueryResult,
+  SeismicAnomaly,
 } from '../types';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -15,6 +16,32 @@ function getAuthHeader(): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  const headers = {
+    ...getAuthHeader(),
+    ...(options.headers || {}),
+  };
+
+  const res = await fetch(`${API_BASE}${endpoint}`, {
+    ...options,
+    headers,
+  });
+
+  if (res.status === 401 && !endpoint.includes('/auth/login')) {
+    localStorage.removeItem('sismowatch_token');
+    localStorage.removeItem('sismowatch_user');
+    window.dispatchEvent(new CustomEvent('sismowatch:session_expired'));
+    throw new Error('SESION_REQUERIDA: Tu sesión ha expirado o requiere autenticación.');
+  }
+
+  if (!res.ok) {
+    const errorBody = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(errorBody.detail || `Error en la petición: ${res.status}`);
+  }
+
+  return res.json();
+}
+
 export const api = {
   async login(username: string, password: string): Promise<AuthResponse> {
     const res = await fetch(`${API_BASE}/auth/login`, {
@@ -22,19 +49,30 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password }),
     });
+
     if (!res.ok) {
-      const err = await res.json().catch(() => ({ detail: 'Error de autenticación' }));
-      throw new Error(err.detail || 'Credenciales inválidas');
+      const err = await res.json().catch(() => ({ detail: 'Credenciales inválidas' }));
+      throw new Error(err.detail || 'Fallo de autenticación');
     }
-    return res.json();
+
+    const data: AuthResponse = await res.json();
+    return data;
   },
 
   async getKpis(): Promise<KpiData> {
-    const res = await fetch(`${API_BASE}/api/kpis`, {
-      headers: { ...getAuthHeader() },
-    });
-    if (!res.ok) throw new Error('Error al obtener KPIs');
-    return res.json();
+    const raw = await request<any>('/api/kpis');
+    return {
+      total_events_24h: raw.total_events_24h ?? 0,
+      max_magnitude: raw.max_magnitude ?? raw.max_magnitude_24h ?? null,
+      max_magnitude_24h: raw.max_magnitude ?? raw.max_magnitude_24h ?? null,
+      avg_magnitude: raw.avg_magnitude ?? raw.avg_magnitude_24h ?? null,
+      avg_magnitude_24h: raw.avg_magnitude ?? raw.avg_magnitude_24h ?? null,
+      tsunami_alerts_count: raw.tsunami_alerts_count ?? raw.tsunami_alerts_24h ?? 0,
+      tsunami_alerts_24h: raw.tsunami_alerts_count ?? raw.tsunami_alerts_24h ?? 0,
+      quality_score: raw.quality_score ?? raw.data_quality_score ?? 100,
+      data_quality_score: raw.quality_score ?? raw.data_quality_score ?? 100,
+      latest_update: raw.latest_update ?? raw.last_updated ?? new Date().toISOString(),
+    };
   },
 
   async getEvents(params: {
@@ -44,48 +82,62 @@ export const api = {
     start_time?: string;
     end_time?: string;
     search?: string;
+    has_tsunami?: boolean;
   }): Promise<EventsResponse> {
     const query = new URLSearchParams();
     if (params.page) query.append('page', params.page.toString());
-    if (params.limit) query.append('limit', params.limit.toString());
-    if (params.min_magnitude !== undefined) query.append('min_magnitude', params.min_magnitude.toString());
-    if (params.start_time) query.append('start_date', params.start_time.slice(0, 10));
-    if (params.end_time) query.append('end_date', params.end_time.slice(0, 10));
-    if (params.search) query.append('region', params.search);
+    const limit = params.limit || 10;
+    query.append('limit', limit.toString());
 
-    const res = await fetch(`${API_BASE}/api/events?${query.toString()}`, {
-      headers: { ...getAuthHeader() },
-    });
-    if (!res.ok) throw new Error('Error al obtener eventos');
-    return res.json();
+    if (params.min_magnitude !== undefined && params.min_magnitude > 0) {
+      query.append('min_magnitude', params.min_magnitude.toString());
+    }
+    if (params.start_time) {
+      query.append('start_date', params.start_time.slice(0, 10));
+    }
+    if (params.end_time) {
+      query.append('end_date', params.end_time.slice(0, 10));
+    }
+    if (params.search && params.search.trim()) {
+      query.append('region', params.search.trim());
+    }
+
+    const raw = await request<any>(`/api/events?${query.toString()}`);
+    const eventsList = Array.isArray(raw) ? raw : (raw.events || []);
+    const totalCount = raw.total ?? eventsList.length;
+
+    // Optional frontend filter for tsunami if param present
+    let filteredEvents = eventsList;
+    if (params.has_tsunami) {
+      filteredEvents = filteredEvents.filter((e: any) => e.tsunami === 1);
+    }
+
+    return {
+      total: totalCount,
+      page: raw.page || params.page || 1,
+      limit,
+      total_pages: Math.ceil(totalCount / limit) || 1,
+      events: filteredEvents,
+    };
   },
 
   async getStats(hours: number = 24): Promise<StatsResponse> {
-    const res = await fetch(`${API_BASE}/api/stats?hours=${hours}`, {
-      headers: { ...getAuthHeader() },
-    });
-    if (!res.ok) throw new Error('Error al obtener estadísticas');
-    return res.json();
+    return request<StatsResponse>(`/api/stats?hours=${hours}`);
   },
 
   async getLatestReport(): Promise<AiReport> {
-    const res = await fetch(`${API_BASE}/api/reports/latest`, {
-      headers: { ...getAuthHeader() },
-    });
-    if (!res.ok) throw new Error('Error al obtener reporte de IA');
-    return res.json();
+    return request<AiReport>('/api/reports/latest');
   },
 
   async exportReport(format: 'csv' | 'html'): Promise<void> {
-    const res = await fetch(`${API_BASE}/api/reports/export?format=${format}`, {
-      headers: { ...getAuthHeader() },
-    });
-    if (!res.ok) throw new Error(`Error al exportar reporte en ${format}`);
+    const headers = getAuthHeader();
+    const res = await fetch(`${API_BASE}/api/reports/export?format=${format}`, { headers });
+    if (!res.ok) throw new Error(`Fallo al exportar reporte en formato ${format}`);
     const blob = await res.blob();
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `sismowatch_report_${new Date().toISOString().slice(0, 10)}.${format}`;
+    a.download = `sismowatch_boletin_${new Date().toISOString().slice(0, 10)}.${format}`;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -93,61 +145,34 @@ export const api = {
   },
 
   async getQuarantine(): Promise<QuarantineRecord[]> {
-    const res = await fetch(`${API_BASE}/api/quality/quarantine`, {
-      headers: { ...getAuthHeader() },
-    });
-    if (res.status === 403) {
-      throw new Error('ACCESO_DENEGADO_ROL: Se requiere rol de Administrador para acceder a la cuarentena');
-    }
-    if (!res.ok) throw new Error('Error al obtener registros de cuarentena');
-    return res.json();
+    return request<QuarantineRecord[]>('/api/quality/quarantine');
   },
 
   async runNaturalQuery(query: string): Promise<SqlQueryResult> {
-    const res = await fetch(`${API_BASE}/api/ai/query`, {
+    return request<SqlQueryResult>('/api/ai/query', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...getAuthHeader(),
-      },
-      body: JSON.stringify({ query }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        question: query,
+        query,
+        sql_query: query,
+      }),
     });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ detail: 'Error al ejecutar consulta' }));
-      throw new Error(err.detail || 'Fallo en consulta analítica');
-    }
-    return res.json();
-  },
-
-  async triggerDag(dagId: string): Promise<{ status: string; message: string }> {
-    const res = await fetch(`${API_BASE}/api/pipeline/trigger`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...getAuthHeader(),
-      },
-      body: JSON.stringify({ dag_id: dagId }),
-    });
-    if (res.status === 403) {
-      throw new Error('ACCESO_DENEGADO_ROL: Solo administradores pueden ejecutar pipelines');
-    }
-    if (!res.ok) throw new Error('Error al disparar pipeline en Airflow');
-    return res.json();
   },
 
   async getLineage(): Promise<any> {
-    const res = await fetch(`${API_BASE}/api/pipeline/lineage`, {
-      headers: { ...getAuthHeader() },
-    });
-    if (!res.ok) throw new Error('Error al obtener linaje de datos');
-    return res.json();
+    return request<any>('/api/pipeline/lineage');
   },
 
-  async getAnomalies(): Promise<any[]> {
-    const res = await fetch(`${API_BASE}/api/anomalies`, {
-      headers: { ...getAuthHeader() },
+  async getAnomalies(): Promise<SeismicAnomaly[]> {
+    return request<SeismicAnomaly[]>('/api/anomalies').catch(() => []);
+  },
+
+  async triggerDag(dagId: string): Promise<{ status: string; message: string }> {
+    return request<{ status: string; message: string }>('/api/pipeline/trigger', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dag_id: dagId }),
     });
-    if (!res.ok) return [];
-    return res.json();
   },
 };

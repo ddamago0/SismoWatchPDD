@@ -61,3 +61,4 @@ def test_detect_seismic_anomalies_combines_swarms_and_spikes():
     types = [a["type"] for a in anomalies]
     assert "SEISMIC_SWARM_EVENT" in types
     assert "HIGH_MAGNITUDE_EVENT" in types
+

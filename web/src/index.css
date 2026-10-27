@@ -4,36 +4,69 @@
 
 @layer base {
   body {
-    @apply bg-slate-950 text-slate-100;
+    @apply bg-dark-950 text-slate-100 font-sans antialiased selection:bg-cobalt-500 selection:text-white;
   }
 }
 
-/* Custom scrollbars */
+/* Precision scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
-  background: #020617;
+  background: #050505;
 }
 ::-webkit-scrollbar-thumb {
   background: #1e293b;
-  border-radius: 3px;
+  border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #334155;
 }
 
-/* Leaflet Custom Popups */
+/* Glassmorphism Surface Utility */
+.glass-surface {
+  background: rgba(14, 22, 36, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.glass-surface-elevated {
+  background: rgba(19, 29, 48, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Leaflet Container & Tile Overrides */
+.leaflet-container {
+  width: 100% !important;
+  height: 100% !important;
+  background: #080d16 !important;
+  font-family: 'Inter', sans-serif !important;
+}
+
+/* Custom Leaflet Popups */
 .sismowatch-popup .leaflet-popup-content-wrapper {
-  background: #ffffff;
-  color: #0f172a;
-  border-radius: 0.75rem;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
-  padding: 0.25rem;
+  background: #0e1624 !important;
+  color: #f1f5f9 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 0.75rem !important;
+  box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.7) !important;
+  padding: 0.15rem !important;
 }
 
 .sismowatch-popup .leaflet-popup-tip {
-  background: #ffffff;
+  background: #0e1624 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
 }
 
+.sismowatch-popup a.leaflet-popup-close-button {
+  color: #94a3b8 !important;
+  padding: 6px !important;
+}
+
+.sismowatch-popup a.leaflet-popup-close-button:hover {
+  color: #ffffff !important;
+}
