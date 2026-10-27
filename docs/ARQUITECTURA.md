@@ -274,3 +274,72 @@ CREATE INDEX idx_quarantine_rule ON curated.quality_quarantine(rule_failed);
 - Consultas por rango temporal aprovechan el índice `idx_curated_time` en orden descendente directo.
 - Filtros espaciales y de magnitud aprovechan índices combinados sin escaneos secuenciales de tabla completa.
 
+---
+
+## 9. Conciliación Matemática y Gobernanza de Calidad (Patrón Medallion)
+
+Inspirado en los estándares de auditoría de plataformas de datos enterprise (referencia Medallion), SismoWatch aplica una **Ecuación de Conciliación Determinista** en cada lote de procesamiento:
+
+$$N_{\text{raw}} = N_{\text{curated}} + N_{\text{quarantine}} + N_{\text{duplicates}}$$
+
+Donde:
+- $N_{\text{raw}}$: Conteo total de eventos GeoJSON extraídos de la API de USGS.
+- $N_{\text{curated}}$: Registros que aprobaron el 100% de las aserciones de esquema en Pandera e ingresaron a `curated.earthquakes_curated`.
+- $N_{\text{quarantine}}$: Registros con fallos estructurales (latitud/longitud fuera de límites, magnitudes absurdas o IDs vacíos) aislados en `curated.quality_quarantine`.
+- $N_{\text{duplicates}}$: Registros idempotentes actualizados sin inserción redundante vía `ON CONFLICT (id) DO UPDATE`.
+
+### Métricas de Gobernanza y Frescura (`curated.quality_results`)
+Para cada corrida se persiste:
+1. **Puntaje de Calidad (`quality_score`)**: Porcentaje de eventos conformes:
+   $$\text{Score} = \left(\frac{N_{\text{curated}}}{N_{\text{curated}} + N_{\text{quarantine}}}\right) \times 100$$
+2. **Lag de Frescura (`freshness_lag_seconds`)**: Tiempo transcurrido entre el evento más reciente reportado por USGS y el instante de consolidación en Gold.
+3. **Resumen de Reglas (`rules_summary JSONB`)**: Desglose exacto de conteos por regla evaluada (`GEOGRAPHIC_BOUNDS`, `MAGNITUDE_OUT_OF_RANGE`, etc.).
+
+---
+
+## 10. Decisiones de Diseño y Trade-Offs de Ingeniería (ADRs)
+
+### ADR-01: ¿Por qué Apache Airflow y no un Cron Job tradicional de Linux?
+- **Decisión**: Orquestación mediante Apache Airflow 2.8.1 (LocalExecutor, Python 3.11).
+- **Justificación**:
+  - Un cron job no ofrece visibilidad gráfica de dependencias, no reintenta de forma inteligente con backoff exponencial, no registra auditoría de ejecuciones ni permite backfills históricos parametrizados con `execution_date`.
+  - Airflow permite orquestar flujos dirigidos acíclicos (DAGs) con disparadores reactivos (`TriggerDagRun`), alarmas en fallas (`on_failure_callback`), y trazabilidad de linaje entre tareas.
+
+### ADR-02: ¿Por qué Arquitectura Medallion en PostgreSQL y no una única tabla plana?
+- **Decisión**: Separación física en esquemas `raw` (Bronze), `staging` (Silver) y `curated` (Gold).
+- **Justificación**:
+  - **Inmutabilidad y Linaje**: `raw` almacena el JSONB original sin alterar. Si cambia el algoritmo de detección de anomalías o se descubre un bug en las transformaciones, es posible reprocesar la historia completa sin volver a consultar la API externa de USGS.
+  - **Seguridad RBAC**: Permite asignar permisos a nivel de esquema en el motor de base de datos (`REVOKE ALL ON SCHEMA raw, staging FROM sismo_reader;`). La API solo puede leer `curated`, haciendo imposible que una brecha web comprometa los datos históricos o la ingesta.
+
+### ADR-03: ¿Por qué Pandera frente a Great Expectations o validaciones manuales?
+- **Decisión**: Contratos de esquema declarativos con Pandera sobre DataFrames de Pandas.
+- **Justificación**:
+  - Great Expectations introduce una sobrecarga considerable de configuración (Data Contexts, Checkpoints, Suites en JSON) que ralentiza pipelines ligeros de alta frecuencia (cada 5 minutos).
+  - Validaciones manuales con `if/else` son propensas a errores, difíciles de auditar y no generan metadatos estructurados.
+  - Pandera ofrece tipado estático, validaciones vectorizadas de alto rendimiento y generación automática de reportes de error detallados sin penalizar la latencia del pipeline.
+
+### ADR-04: ¿Por qué Server-Sent Events (SSE) frente a WebSockets o Polling?
+- **Decisión**: Emisión reactiva unidireccional con Server-Sent Events sobre HTTP estándar.
+- **Justificación**:
+  - El caso de uso es estrictamente servidor-a-cliente: notificar al mapa y dashboard cuando ocurre un sismo.
+  - WebSockets introduce sobrecosto de conexión bidireccional y complejidad con cortafuegos y balanceadores corporativos.
+  - Polling periódico de 3-5 segundos satura la red y la base de datos con peticiones vacías.
+  - SSE opera de forma transparente sobre HTTP, maneja reconexión automática nativa en el navegador y consume recursos mínimos.
+
+---
+
+## 11. ¿Qué Haríamos Diferente en Producción Enterprise?
+
+Si esta solución se escalara para procesar millones de eventos por segundo en SuperApp a nivel global:
+
+1. **Streaming Nativo con Apache Kafka + Apache Flink**:
+   - Reemplazar la ingesta batch cada 5 min por un conector Kafka Connect consumiendo websockets/webhooks sísmicos de múltiples agencias geológicas mundiales (USGS, EMSC, JMA, IGN).
+   - Procesamiento de ventanas de tiempo con Apache Flink para calcular Z-Score en tiempo real subsegundo.
+2. **Data Lakehouse en MinIO / AWS S3 con Apache Iceberg**:
+   - Almacenar las capas Bronze y Silver en formato Parquet sobre un Lakehouse transaccional (Apache Iceberg o Delta Lake), reduciendo los costos de almacenamiento relacional en PostgreSQL.
+3. **Gobernanza Dinámica y Catálogo con OpenMetadata**:
+   - Integrar OpenLineage / Marquez y OpenMetadata para capturar linaje automatizado columna por columna en cada corrida de Airflow y documentar el linaje desde la API pública hasta la pantalla del dashboard.
+4. **Observabilidad Distribuida**:
+   - Instrumentación con OpenTelemetry, Prometheus y Grafana para monitorear métricas de CPU, memoria, tasa de eventos y latencia p99 de los endpoints de la API.
+
+

@@ -30,8 +30,8 @@ source .env
 set +a
 
 # 2. Levantar la infraestructura completa con Docker Compose
-echo "🐳 Levantando contenedores con Docker Compose..."
-docker compose up -d --build postgres api web
+echo "🐳 Levantando contenedores con Docker Compose (PostgreSQL, Airflow, FastAPI, React)..."
+docker compose up -d --build
 
 # 3. Esperar a que PostgreSQL y FastAPI estén listos
 echo "⏳ Esperando a que PostgreSQL esté en estado 'healthy'..."
