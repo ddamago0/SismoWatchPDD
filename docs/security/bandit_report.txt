@@ -1,0 +1,159 @@
+[main]	INFO	profile include tests: None
+[main]	INFO	profile exclude tests: None
+[main]	INFO	cli include tests: None
+[main]	INFO	cli exclude tests: None
+[main]	INFO	running on Python 3.12.3
+/home/cohorte5/SismoWatchPDD/airflow/include/db_utils.py:117: MEDIUM[B608]: Possible SQL injection vector through string-based query construction.
+/home/cohorte5/SismoWatchPDD/airflow/include/db_utils.py:168: MEDIUM[B608]: Possible SQL injection vector through string-based query construction.
+/home/cohorte5/SismoWatchPDD/api/src/routers/auth.py:46: LOW[B106]: Possible hardcoded password: 'bearer'
+/home/cohorte5/SismoWatchPDD/api/src/routers/events.py:52: MEDIUM[B608]: Possible SQL injection vector through string-based query construction.
+/home/cohorte5/SismoWatchPDD/api/src/routers/events.py:60: MEDIUM[B608]: Possible SQL injection vector through string-based query construction.
+/home/cohorte5/SismoWatchPDD/api/src/services/sql_guard.py:64: MEDIUM[B608]: Possible SQL injection vector through string-based query construction.
+/home/cohorte5/SismoWatchPDD/api/src/services/sse_manager.py:37: LOW[B110]: Try, Except, Pass detected.
+[main]	INFO	profile include tests: None
+[main]	INFO	profile exclude tests: None
+[main]	INFO	cli include tests: None
+[main]	INFO	cli exclude tests: None
+[main]	INFO	running on Python 3.12.3
+Run started:2026-10-27 14:53:25.744381+00:00
+
+Test results:
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: airflow/include/db_utils.py:117:14
+116	
+117	    sql = f"""
+118	        INSERT INTO staging.earthquakes_staging ({', '.join(cols)}, transformed_at)
+119	        VALUES %s
+120	        ON CONFLICT (id) DO UPDATE SET
+121	            mag = EXCLUDED.mag,
+122	            place = EXCLUDED.place,
+123	            time = EXCLUDED.time,
+124	            updated = EXCLUDED.updated,
+125	            status = EXCLUDED.status,
+126	            tsunami = EXCLUDED.tsunami,
+127	            sig = EXCLUDED.sig,
+128	            alert = EXCLUDED.alert,
+129	            longitude = EXCLUDED.longitude,
+130	            latitude = EXCLUDED.latitude,
+131	            depth_km = EXCLUDED.depth_km,
+132	            batch_id = EXCLUDED.batch_id,
+133	            transformed_at = CURRENT_TIMESTAMP;
+134	    """
+135	
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: airflow/include/db_utils.py:168:14
+167	
+168	    sql = f"""
+169	        INSERT INTO curated.earthquakes_curated ({', '.join(cols)}, is_validated, curated_at)
+170	        VALUES %s
+171	        ON CONFLICT (id) DO UPDATE SET
+172	            mag = EXCLUDED.mag,
+173	            place = EXCLUDED.place,
+174	            time = EXCLUDED.time,
+175	            updated = EXCLUDED.updated,
+176	            status = EXCLUDED.status,
+177	            tsunami = EXCLUDED.tsunami,
+178	            sig = EXCLUDED.sig,
+179	            alert = EXCLUDED.alert,
+180	            longitude = EXCLUDED.longitude,
+181	            latitude = EXCLUDED.latitude,
+182	            depth_km = EXCLUDED.depth_km,
+183	            batch_id = EXCLUDED.batch_id,
+184	            is_validated = TRUE,
+185	            curated_at = CURRENT_TIMESTAMP;
+186	    """
+187	
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'bearer'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b106_hardcoded_password_funcarg.html
+   Location: api/src/routers/auth.py:46:11
+45	        access_token=access_token,
+46	        token_type="bearer",
+47	        role=role,
+48	        username=username
+49	    )
+50	
+51	
+52	@router.get("/me", response_model=UserResponse)
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: api/src/routers/events.py:52:23
+51	    # 1. Total de registros que cumplen los filtros
+52	    sql_count = text(f"SELECT COUNT(*) FROM curated.earthquakes_curated WHERE {where_clause}")
+53	    total = db.execute(sql_count, params).scalar() or 0
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: api/src/routers/events.py:60:24
+59	
+60	    sql_data = text(f"""
+61	        SELECT
+62	            id, mag, place, time, updated, tz, url, detail, felt,
+63	            cdi, mmi, alert, status, tsunami, sig, net, code,
+64	            mag_type, type, title, longitude, latitude, depth_km,
+65	            is_validated, batch_id, curated_at
+66	        FROM curated.earthquakes_curated
+67	        WHERE {where_clause}
+68	        ORDER BY time DESC
+69	        LIMIT :limit OFFSET :offset;
+70	    """)
+71	    rows = db.execute(sql_data, params).fetchall()
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: api/src/services/sql_guard.py:64:19
+63	    # Envolver en subquery con límite forzado
+64	    safe_query = f"SELECT * FROM ({cleaned_query}) AS guarded_subquery LIMIT {max_limit};"
+65	    return safe_query
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: api/src/services/sse_manager.py:37:12
+36	                await queue.put(message)
+37	            except Exception:
+38	                pass
+39	
+
+--------------------------------------------------
+
+Code scanned:
+	Total lines of code: 2505
+	Total lines skipped (#nosec): 0
+	Total potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 0
+
+Run metrics:
+	Total issues (by severity):
+		Undefined: 0
+		Low: 2
+		Medium: 5
+		High: 0
+	Total issues (by confidence):
+		Undefined: 0
+		Low: 5
+		Medium: 1
+		High: 1
+Files skipped (0):

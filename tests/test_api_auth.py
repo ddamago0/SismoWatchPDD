@@ -13,6 +13,7 @@ sys.path.insert(0, str(repo_root / "api"))
 
 from src.auth.jwt import create_access_token, decode_access_token
 from src.services.sql_guard import validate_read_only_sql, SQLSecurityError
+from src.config import settings
 
 API_BASE = "http://localhost:8000"
 
@@ -71,7 +72,7 @@ def test_api_rbac_quarantine_forbidden_for_viewer():
         # 1. Login como viewer
         login_res = client.post(
             "/auth/login",
-            json={"username": "viewer", "password": "-D5x4648Zh-EJsYBqhAp74-b6wk"}
+            json={"username": settings.VIEWER_USER, "password": settings.VIEWER_PASSWORD}
         )
         assert login_res.status_code == 200
         viewer_token = login_res.json()["access_token"]
@@ -91,7 +92,7 @@ def test_api_rbac_quarantine_allowed_for_admin():
         # 1. Login como admin
         login_res = client.post(
             "/auth/login",
-            json={"username": "admin", "password": "9qwtK_dVjef-ex5qgrHnlJRr6u8"}
+            json={"username": settings.ADMIN_USER, "password": settings.ADMIN_PASSWORD}
         )
         assert login_res.status_code == 200
         admin_token = login_res.json()["access_token"]

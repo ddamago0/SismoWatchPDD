@@ -4,19 +4,22 @@ Garantiza que la re-ejecución repetida de DAGs con los mismos IDs
 no duplica registros gracias a la cláusula 'ON CONFLICT (id) DO UPDATE'.
 """
 
+import os
 import sys
 from pathlib import Path
 import psycopg2
 import pytest
 
 repo_root = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(repo_root / "api"))
+from src.config import settings
 
 DB_CONFIG = {
-    "host": "127.0.0.1",
-    "port": 5432,
-    "dbname": "sismowatch",
-    "user": "postgres",
-    "password": "Qa7y7FyEhSFKerSCXFuBndX17lqkNkg1W_XeXA",
+    "host": os.getenv("POSTGRES_HOST_LOCAL", "127.0.0.1"),
+    "port": settings.POSTGRES_PORT,
+    "dbname": settings.POSTGRES_DB,
+    "user": settings.POSTGRES_USER,
+    "password": settings.POSTGRES_PASSWORD,
 }
 
 
