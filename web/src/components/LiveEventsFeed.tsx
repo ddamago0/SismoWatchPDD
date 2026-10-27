@@ -1,6 +1,6 @@
 import React from 'react';
 import { EarthquakeEvent } from '../types';
-import { Radio, Waves, MapPin, ChevronRight, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { Waves, MapPin, ChevronRight, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { SSEConnectionStatus } from '../services/sse';
 
 interface LiveEventsFeedProps {
@@ -24,135 +24,100 @@ export const LiveEventsFeed: React.FC<LiveEventsFeedProps> = ({
   onSelectEvent,
 }) => {
   return (
-    <div className="w-full h-[520px] rounded-2xl overflow-hidden border border-white/10 bg-dark-900 shadow-2xl flex flex-col">
+    <div className="w-full h-[540px] rounded-2xl overflow-hidden border border-slate-800 bg-[#060911] shadow-2xl flex flex-col">
       {/* Feed Header */}
-      <div className="p-3.5 bg-dark-950/80 border-b border-white/10 flex items-center justify-between">
+      <div className="p-3.5 bg-[#0a0f1d] border-b border-slate-800 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <div className="p-1.5 rounded-lg bg-cobalt-500/10 text-cobalt-400 border border-cobalt-500/20">
-            <Radio className="w-4 h-4 animate-pulse" />
-          </div>
-          <div>
-            <h3 className="text-xs font-bold text-white tracking-tight uppercase font-mono">
-              Feed de Eventos en Tiempo Real
-            </h3>
-            <p className="text-[10px] text-slate-400 font-mono">
-              Ingesta continua USGS transmitida por SSE
-            </p>
-          </div>
-        </div>
-
-        {/* SSE Status Pill */}
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-dark-850 border border-white/10 text-[10px] font-mono">
           <span
-            className={`w-2 h-2 rounded-full ${
+            className={`w-2.5 h-2.5 rounded-full ${
               connectionStatus === 'connected'
-                ? 'bg-emerald-400 animate-ping'
+                ? 'bg-emerald-400 animate-pulse'
                 : connectionStatus === 'reconnecting'
-                ? 'bg-amber-400 animate-pulse'
+                ? 'bg-amber-400 animate-ping'
                 : 'bg-rose-500'
             }`}
           />
-          <span
-            className={
-              connectionStatus === 'connected'
-                ? 'text-emerald-400 font-semibold'
-                : connectionStatus === 'reconnecting'
-                ? 'text-amber-400 font-semibold'
-                : 'text-rose-400 font-semibold'
-            }
-          >
-            {connectionStatus === 'connected'
-              ? 'SSE EN VIVO'
-              : connectionStatus === 'reconnecting'
-              ? 'RECONECTANDO...'
-              : 'DESCONECTADO'}
-          </span>
+          <h3 className="text-xs font-bold text-white tracking-wide uppercase font-mono">
+            Telemetría Sísmica Reciente
+          </h3>
+        </div>
+
+        <div className="text-[11px] font-mono text-slate-400">
+          {events.length} sismos curados
         </div>
       </div>
 
-      {/* Events List Scrollable */}
-      <div className="flex-grow overflow-y-auto divide-y divide-white/5 p-2 space-y-1.5">
+      {/* Events Scrollable List */}
+      <div className="flex-grow overflow-y-auto divide-y divide-slate-800/80">
         {events.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center p-8 text-center text-slate-500 font-mono text-xs">
-            <Radio className="w-8 h-8 mb-2 opacity-30 text-slate-400" />
-            <p>Esperando telemetría de eventos sísmicos...</p>
-            <p className="text-[10px] text-slate-600 mt-1">Los nuevos sismos aparecerán automáticamente aquí.</p>
+          <div className="flex flex-col items-center justify-center h-full p-6 text-center text-slate-500">
+            <p className="text-xs font-mono">Esperando eventos sísmicos...</p>
           </div>
         ) : (
           events.map((evt) => {
-            const color = getMagnitudeColor(evt.mag);
             const isSelected = selectedEventId === evt.id;
+            const magColor = getMagnitudeColor(evt.mag);
+            const isHighMag = evt.mag >= 6.0;
 
             return (
               <div
                 key={evt.id}
                 onClick={() => onSelectEvent(evt)}
-                className={`p-2.5 rounded-xl transition-all cursor-pointer border ${
+                className={`p-3.5 transition-all cursor-pointer flex items-center justify-between gap-3 ${
                   isSelected
-                    ? 'bg-cobalt-500/15 border-cobalt-500/50 shadow-md'
-                    : 'bg-dark-850/50 hover:bg-dark-850 border-white/5 hover:border-white/10'
+                    ? 'bg-blue-950/40 border-l-4 border-blue-500'
+                    : 'hover:bg-slate-900/60'
                 }`}
               >
-                <div className="flex items-start justify-between gap-2">
-                  {/* Magnitude Pill */}
+                {/* Magnitude Badge */}
+                <div className="flex items-center gap-3 min-w-0">
                   <div
-                    className="px-2 py-0.5 rounded text-white text-xs font-mono font-bold flex-shrink-0 shadow-sm"
-                    style={{ backgroundColor: color }}
+                    className="w-11 h-11 rounded-xl flex flex-col items-center justify-center font-mono font-black shrink-0 shadow-md text-white border"
+                    style={{
+                      backgroundColor: `${magColor}20`,
+                      borderColor: `${magColor}50`,
+                      color: magColor,
+                    }}
                   >
-                    {evt.mag.toFixed(1)} Mw
+                    <span className="text-xs leading-none">{evt.mag.toFixed(1)}</span>
+                    <span className="text-[8px] uppercase tracking-wider opacity-80 mt-0.5">Mw</span>
                   </div>
 
-                  {/* Title & Location */}
-                  <div className="flex-grow min-w-0">
-                    <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 mb-0.5">
-                      <span className="truncate max-w-[120px] text-slate-500">ID: {evt.id}</span>
-                      <span>
-                        {new Date(evt.time).toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          second: '2-digit',
-                        })}
-                      </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-xs font-semibold text-slate-200 truncate">
+                        {evt.place || 'Epicentro no especificado'}
+                      </h4>
+                      {evt.tsunami === 1 && (
+                        <span
+                          title="Alerta de Tsunami Emitida"
+                          className="px-1.5 py-0.5 rounded text-[8px] font-mono font-black uppercase bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center gap-0.5 shrink-0"
+                        >
+                          <Waves className="w-2.5 h-2.5" />
+                          TSUNAMI
+                        </span>
+                      )}
                     </div>
 
-                    <h4 className="text-xs font-semibold text-slate-200 truncate leading-snug">
-                      {evt.place}
-                    </h4>
-
-                    {/* Coordinates & Depth */}
-                    <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 mt-1">
-                      <span>Prof: <strong className="text-slate-300">{evt.depth_km.toFixed(1)} km</strong></span>
-                      <span className="truncate">
-                        [{evt.latitude.toFixed(2)}, {evt.longitude.toFixed(2)}]
-                      </span>
+                    <div className="flex items-center gap-2 mt-1 text-[10px] font-mono text-slate-400">
+                      <span>Prof: {evt.depth_km != null ? `${evt.depth_km.toFixed(1)} km` : '—'}</span>
+                      <span>&bull;</span>
+                      <span>{new Date(evt.time).toLocaleTimeString()} UTC</span>
                     </div>
-
-                    {/* Tsunami badge if alert */}
-                    {evt.tsunami === 1 && (
-                      <div className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[9px] font-mono font-bold">
-                        <Waves className="w-3 h-3" />
-                        <span>ALERTA TSUNAMI</span>
-                      </div>
-                    )}
                   </div>
-
-                  <ChevronRight className={`w-4 h-4 flex-shrink-0 mt-1 ${isSelected ? 'text-cobalt-400' : 'text-slate-600'}`} />
                 </div>
+
+                <ChevronRight className="w-4 h-4 text-slate-600 shrink-0" />
               </div>
             );
           })
         )}
       </div>
 
-      {/* Footer Counter */}
-      <div className="p-2.5 bg-dark-950 border-t border-white/10 flex items-center justify-between text-[10px] font-mono text-slate-500">
-        <span>Mostrando {events.length} eventos recientes</span>
-        <span className="flex items-center gap-1 text-emerald-400">
-          <ShieldCheck className="w-3 h-3" />
-          100% Curados
-        </span>
+      {/* Feed Footer */}
+      <div className="p-2 bg-[#0a0f1d] border-t border-slate-800 text-center text-[10px] font-mono text-slate-400">
+        Invariante Medallion: 100% de eventos validados por Pandera
       </div>
     </div>
   );
 };
-

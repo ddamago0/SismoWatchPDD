@@ -208,3 +208,4 @@ export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({ isOpen, onClose }) =
     </>
   );
 };
+

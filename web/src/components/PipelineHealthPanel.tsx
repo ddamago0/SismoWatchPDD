@@ -111,3 +111,4 @@ export const PipelineHealthPanel: React.FC<PipelineHealthPanelProps> = ({ kpis }
     </div>
   );
 };
+

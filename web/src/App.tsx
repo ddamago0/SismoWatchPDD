@@ -4,9 +4,12 @@ import { api } from './services/api';
 import { connectSSE, SSEConnectionStatus } from './services/sse';
 import { EarthquakeEvent, KpiData, StatsResponse, AiReport, SeismicAnomaly } from './types';
 import { Navbar, MainNavTab } from './components/Navbar';
+import { HomePage } from './components/HomePage';
+import { LoginModal } from './components/LoginModal';
+import { TsunamiBanner } from './components/TsunamiBanner';
 import { KpiCards } from './components/KpiCards';
 import { FiltersBar } from './components/FiltersBar';
-import { SeismicMap } from './components/SeismicMap';
+import { TacticalMap } from './components/TacticalMap';
 import { LiveEventsFeed } from './components/LiveEventsFeed';
 import { AnalyticsCharts } from './components/AnalyticsCharts';
 import { EventsTable } from './components/EventsTable';
@@ -14,10 +17,9 @@ import { AiReportCard } from './components/AiReportCard';
 import { PipelineHealthPanel } from './components/PipelineHealthPanel';
 import { AdminAuditPanel } from './components/AdminAuditPanel';
 import { AiChatDrawer } from './components/AiChatDrawer';
-import { LoginScreen } from './components/LoginScreen';
 
 const MainApp: React.FC = () => {
-  const { token, isAuthenticated, isAdmin } = useAuth();
+  const { token, isAuthenticated, isAdmin, showLoginModal, setShowLoginModal } = useAuth();
   const [connectionStatus, setConnectionStatus] = useState<SSEConnectionStatus>('disconnected');
   const [activeTab, setActiveTab] = useState<MainNavTab>('monitoring');
   const [isAiDrawerOpen, setIsAiDrawerOpen] = useState(false);
@@ -42,7 +44,7 @@ const MainApp: React.FC = () => {
   // UI State
   const [loading, setLoading] = useState(true);
 
-  // Ensure Viewer is redirected if trying to access admin_audit
+  // Strict RBAC Navigation Guard: Viewer must NEVER stay on admin_audit
   useEffect(() => {
     if (activeTab === 'admin_audit' && !isAdmin) {
       setActiveTab('monitoring');
@@ -87,7 +89,7 @@ const MainApp: React.FC = () => {
       if (reportRes.status === 'fulfilled') setReport(reportRes.value);
       if (anomRes.status === 'fulfilled') setAnomalies(anomRes.value);
     } catch (err: any) {
-      console.error('Error fetching dashboard data', err);
+      console.error('Error fetching operational data', err);
     } finally {
       setLoading(false);
     }
@@ -131,13 +133,22 @@ const MainApp: React.FC = () => {
     return cleanup;
   }, [token]);
 
-  // Sin sesión: Vista de Visitante (Solo Login Screen)
+  // 1. Visitante Sin Sesión: Muestra la Landing Page Human-Crafted y permite abrir el Login
   if (!isAuthenticated) {
-    return <LoginScreen />;
+    return (
+      <>
+        <HomePage onOpenLogin={() => setShowLoginModal(true)} />
+        <LoginModal
+          isOpen={showLoginModal}
+          onClose={() => setShowLoginModal(false)}
+        />
+      </>
+    );
   }
 
+  // 2. Usuario Autenticado (Viewer o Admin): Consola Operativa Completa
   return (
-    <div className="min-h-screen bg-[#080d16] text-slate-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-[#070b14] text-slate-100 flex flex-col font-sans">
       {/* Top Navbar */}
       <Navbar
         activeTab={activeTab}
@@ -151,7 +162,13 @@ const MainApp: React.FC = () => {
         {/* Tab 1: Monitoreo & Cartografía Operativa */}
         {activeTab === 'monitoring' && (
           <div className="space-y-5 animate-in fade-in duration-150">
-            {/* KPIs */}
+            {/* Tsunami Emergency Banner (Only triggers when active alerts exist) */}
+            <TsunamiBanner
+              alertsCount={kpis?.tsunami_alerts_count || 0}
+              events={events}
+            />
+
+            {/* Tactical Operational KPIs */}
             <KpiCards kpis={kpis} loading={loading} />
 
             {/* Barra Unificada de Filtros */}
@@ -168,10 +185,10 @@ const MainApp: React.FC = () => {
               loading={loading}
             />
 
-            {/* Zona de Operaciones: Mapa (60%) + Feed en Vivo (40%) */}
+            {/* Zona de Operaciones: Mapa Táctico (God's Eye Satélite) + Feed Reciente */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
               <div className="lg:col-span-7 w-full">
-                <SeismicMap
+                <TacticalMap
                   events={events}
                   anomalies={anomalies}
                   selectedEvent={selectedEvent}
@@ -230,7 +247,7 @@ const MainApp: React.FC = () => {
         )}
       </main>
 
-      {/* Lateral Slide-Over Drawer: Asistente IA (Text-to-SQL) */}
+      {/* Lateral Slide-Over Drawer: Asistente IA (Text-to-SQL + AST Guard) */}
       <AiChatDrawer
         isOpen={isAiDrawerOpen}
         onClose={() => setIsAiDrawerOpen(false)}

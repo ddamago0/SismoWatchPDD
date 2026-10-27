@@ -8,9 +8,7 @@ import {
   BarChart3,
   FileText,
   Workflow,
-  Lock,
   User,
-  Radio,
 } from 'lucide-react';
 import { SSEConnectionStatus } from '../services/sse';
 
@@ -32,31 +30,31 @@ export const Navbar: React.FC<NavbarProps> = ({
   const { user, isAdmin, logout } = useAuth();
 
   return (
-    <header className="sticky top-0 z-40 bg-[#070c16]/90 backdrop-blur-xl border-b border-slate-800 px-4 sm:px-6 py-2.5">
+    <header className="sticky top-0 z-40 bg-[#070b14]/95 backdrop-blur-md border-b border-slate-800 px-4 sm:px-6 py-2.5 select-none">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
         {/* Brand */}
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-rose-600/20 text-rose-500 rounded-xl border border-rose-500/30">
+          <div className="p-2 bg-blue-600/20 text-blue-400 rounded-xl border border-blue-500/30">
             <Activity className="w-5 h-5 animate-pulse" />
           </div>
           <div>
             <div className="flex items-center gap-2">
               <span className="font-extrabold text-base tracking-tight text-white">SismoWatch</span>
-              <span className="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold uppercase tracking-wider bg-rose-500/10 text-rose-400 border border-rose-500/20">
-                SuperApp
+              <span className="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold uppercase tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                v2.4
               </span>
             </div>
-            <p className="text-[10px] text-slate-500 font-mono hidden sm:block">
-              Arquitectura Medallion & Detección Sísmica
+            <p className="text-[10px] text-slate-400 font-mono hidden sm:block">
+              Consola Operativa Medallion
             </p>
           </div>
         </div>
 
         {/* Navigation Tabs based on Role */}
-        <nav className="flex items-center p-1 bg-slate-950 rounded-xl border border-slate-800">
+        <nav className="flex items-center p-1 bg-slate-950 rounded-xl border border-slate-800 text-xs font-mono">
           <button
             onClick={() => onTabChange('monitoring')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-all ${
               activeTab === 'monitoring'
                 ? 'bg-blue-600 text-white shadow'
                 : 'text-slate-400 hover:text-white'
@@ -68,7 +66,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           <button
             onClick={() => onTabChange('analytics')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-all ${
               activeTab === 'analytics'
                 ? 'bg-blue-600 text-white shadow'
                 : 'text-slate-400 hover:text-white'
@@ -80,7 +78,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           <button
             onClick={() => onTabChange('reports')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-all ${
               activeTab === 'reports'
                 ? 'bg-blue-600 text-white shadow'
                 : 'text-slate-400 hover:text-white'
@@ -92,7 +90,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           <button
             onClick={() => onTabChange('pipeline')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-all ${
               activeTab === 'pipeline'
                 ? 'bg-blue-600 text-white shadow'
                 : 'text-slate-400 hover:text-white'
@@ -106,7 +104,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           {isAdmin && (
             <button
               onClick={() => onTabChange('admin_audit')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-all ${
                 activeTab === 'admin_audit'
                   ? 'bg-rose-600 text-white shadow'
                   : 'text-rose-400 hover:text-white hover:bg-rose-950/40'
@@ -124,9 +122,9 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div
             title={
               connectionStatus === 'connected'
-                ? 'Conexión activa con el servidor'
+                ? 'Flujo continuo en línea'
                 : connectionStatus === 'reconnecting'
-                ? 'Reconectando...'
+                ? 'Reconectando flujo...'
                 : 'Desconectado'
             }
             className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-900 border border-slate-800 text-[10px] font-mono"
@@ -168,7 +166,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <div className="text-left leading-none">
                   <div className="font-bold text-white text-[10px]">{user.username}</div>
                   <div className="text-[9px] uppercase tracking-wider font-extrabold opacity-80">
-                    {isAdmin ? 'ADMINISTRADOR' : 'VIEWER'}
+                    {isAdmin ? 'ADMIN' : 'VIEWER'}
                   </div>
                 </div>
               </div>
