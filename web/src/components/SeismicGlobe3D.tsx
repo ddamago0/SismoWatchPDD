@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import Globe, { GlobeMethods } from 'react-globe.gl';
 import { EarthquakeEvent, SeismicAnomaly } from '../types';
-import { Waves, Compass, RotateCcw, Radio, Sparkles, Layers } from 'lucide-react';
+import { Waves, Compass, RotateCcw, Radio, Sparkles, Layers, Navigation } from 'lucide-react';
 
 interface SeismicGlobe3DProps {
   events: EarthquakeEvent[];
@@ -173,6 +173,16 @@ const CosmicStarfield: React.FC<{ width: number; height: number }> = ({ width, h
   );
 };
 
+// Presets de vuelo de cámara orbital a regiones sismotectónicas clave
+const REGIONAL_PRESETS = [
+  { id: 'global', name: 'Global', lat: 20.0, lng: 0.0, altitude: 2.5 },
+  { id: 'latam', name: 'Andes / LatAm', lat: -15.0, lng: -75.0, altitude: 1.8 },
+  { id: 'pacific', name: 'Cinturón Pacífico', lat: 10.0, lng: 165.0, altitude: 2.5 },
+  { id: 'japan', name: 'Japón / Asia', lat: 36.0, lng: 139.0, altitude: 1.6 },
+  { id: 'sanandreas', name: 'San Andrés / USA', lat: 36.5, lng: -120.0, altitude: 1.7 },
+  { id: 'mediterranean', name: 'Mediterráneo', lat: 37.0, lng: 20.0, altitude: 1.8 },
+];
+
 export const SeismicGlobe3D: React.FC<SeismicGlobe3DProps> = ({
   events,
   anomalies = [],
@@ -311,6 +321,16 @@ export const SeismicGlobe3D: React.FC<SeismicGlobe3DProps> = ({
     }
   };
 
+  const flyToRegion = (preset: typeof REGIONAL_PRESETS[0]) => {
+    if (globeRef.current) {
+      setIsRotating(false);
+      globeRef.current.pointOfView(
+        { lat: preset.lat, lng: preset.lng, altitude: preset.altitude },
+        1400
+      );
+    }
+  };
+
   const handlePointClick = (event: any) => {
     const matched = events.find((e) => e.id === event.id || e.id === event.event_id);
     if (matched && onSelectEvent) {
@@ -403,60 +423,81 @@ export const SeismicGlobe3D: React.FC<SeismicGlobe3DProps> = ({
         labelsData={[]}
       />
 
-      {/* Cockpit HUD: Controles Superiores */}
-      <div className="absolute top-4 left-4 z-20 flex flex-wrap items-center gap-2">
-        <button
-          onClick={() => setIsRotating(!isRotating)}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border backdrop-blur text-xs font-medium shadow-lg transition-colors cursor-pointer ${
-            isRotating
-              ? 'bg-sky-500/20 text-sky-300 border-sky-500/30'
-              : 'bg-slate-900/80 text-slate-400 border-slate-700/80 hover:text-white'
-          }`}
-          title="Alternar rotación automática"
-        >
-          <Compass className={`w-3.5 h-3.5 ${isRotating ? 'animate-spin' : ''}`} />
-          <span>{isRotating ? 'Auto-Rotación: ON' : 'Auto-Rotación: OFF'}</span>
-        </button>
+      {/* Cockpit HUD: Controles Superiores y Presets de Vuelo */}
+      <div className="absolute top-4 left-4 right-4 z-20 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
+        {/* Herramientas de visualización */}
+        <div className="flex flex-wrap items-center gap-2 pointer-events-auto">
+          <button
+            onClick={() => setIsRotating(!isRotating)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border backdrop-blur text-xs font-medium shadow-lg transition-colors cursor-pointer ${
+              isRotating
+                ? 'bg-sky-500/20 text-sky-300 border-sky-500/30'
+                : 'bg-slate-900/80 text-slate-400 border-slate-700/80 hover:text-white'
+            }`}
+            title="Alternar rotación automática"
+          >
+            <Compass className={`w-3.5 h-3.5 ${isRotating ? 'animate-spin' : ''}`} />
+            <span>{isRotating ? 'Auto-Rotación: ON' : 'Auto-Rotación: OFF'}</span>
+          </button>
 
-        <button
-          onClick={() => setShowPlates(!showPlates)}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border backdrop-blur text-xs font-medium shadow-lg transition-colors cursor-pointer ${
-            showPlates
-              ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
-              : 'bg-slate-900/80 text-slate-400 border-slate-700/80 hover:text-white'
-          }`}
-          title="Alternar visualización de fallas y placas tectónicas (PB2002)"
-        >
-          <Layers className="w-3.5 h-3.5" />
-          <span>{showPlates ? 'Placas Tectónicas: ON' : 'Placas Tectónicas: OFF'}</span>
-        </button>
+          <button
+            onClick={() => setShowPlates(!showPlates)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border backdrop-blur text-xs font-medium shadow-lg transition-colors cursor-pointer ${
+              showPlates
+                ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                : 'bg-slate-900/80 text-slate-400 border-slate-700/80 hover:text-white'
+            }`}
+            title="Alternar visualización de fallas y placas tectónicas (PB2002)"
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>{showPlates ? 'Placas: ON' : 'Placas: OFF'}</span>
+          </button>
 
-        <button
-          onClick={() => setShowBeacons(!showBeacons)}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border backdrop-blur text-xs font-medium shadow-lg transition-colors cursor-pointer ${
-            showBeacons
-              ? 'bg-purple-500/20 text-purple-300 border-purple-500/30'
-              : 'bg-slate-900/80 text-slate-400 border-slate-700/80 hover:text-white'
-          }`}
-          title="Alternar balizas láser verticales 3D"
-        >
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>{showBeacons ? 'Balizas 3D: ON' : 'Balizas 3D: OFF'}</span>
-        </button>
+          <button
+            onClick={() => setShowBeacons(!showBeacons)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border backdrop-blur text-xs font-medium shadow-lg transition-colors cursor-pointer ${
+              showBeacons
+                ? 'bg-purple-500/20 text-purple-300 border-purple-500/30'
+                : 'bg-slate-900/80 text-slate-400 border-slate-700/80 hover:text-white'
+            }`}
+            title="Alternar balizas láser verticales 3D"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>{showBeacons ? 'Balizas: ON' : 'Balizas: OFF'}</span>
+          </button>
 
-        <button
-          onClick={resetView}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-700/80 bg-slate-900/80 hover:bg-slate-800 text-slate-300 text-xs font-medium shadow-lg transition-colors cursor-pointer"
-          title="Restablecer posición inicial de la cámara"
-        >
-          <RotateCcw className="w-3.5 h-3.5" />
-          <span>Reset</span>
-        </button>
+          <button
+            onClick={resetView}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-700/80 bg-slate-900/80 hover:bg-slate-800 text-slate-300 text-xs font-medium shadow-lg transition-colors cursor-pointer"
+            title="Restablecer posición inicial de la cámara"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>Reset</span>
+          </button>
+        </div>
+
+        {/* Presets de Vuelo de Cámara Orbital */}
+        <div className="flex items-center gap-1 bg-slate-900/90 backdrop-blur border border-slate-800 rounded-lg p-1 text-[11px] shadow-lg pointer-events-auto overflow-x-auto max-w-full">
+          <span className="text-slate-400 font-mono px-1.5 flex items-center gap-1 text-[10px]">
+            <Navigation className="w-3 h-3 text-cyan-400" />
+            <span className="hidden sm:inline">Vuelo:</span>
+          </span>
+          {REGIONAL_PRESETS.map((p) => (
+            <button
+              key={p.id}
+              onClick={() => flyToRegion(p)}
+              className="px-2 py-1 rounded hover:bg-slate-800 text-slate-300 hover:text-cyan-300 transition-colors whitespace-nowrap cursor-pointer font-medium text-[11px]"
+              title={`Volar cámara 3D a ${p.name}`}
+            >
+              {p.name}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Indicador de anomalías activas */}
       {anomalies.length > 0 && (
-        <div className="absolute top-4 right-4 z-20 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-medium backdrop-blur">
+        <div className="absolute top-16 right-4 z-20 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-medium backdrop-blur">
           <Radio className="w-3.5 h-3.5 animate-pulse text-amber-400" />
           <span>{anomalies.length} Enjambre(s) detectado(s)</span>
         </div>
