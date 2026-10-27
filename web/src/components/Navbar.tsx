@@ -1,132 +1,182 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Activity, LogOut, Shield, Sparkles, Workflow, Layers, Radio } from 'lucide-react';
+import {
+  Activity,
+  LogOut,
+  Shield,
+  Sparkles,
+  BarChart3,
+  FileText,
+  Workflow,
+  Lock,
+  User,
+  Radio,
+} from 'lucide-react';
 import { SSEConnectionStatus } from '../services/sse';
 
+export type MainNavTab = 'monitoring' | 'analytics' | 'reports' | 'pipeline' | 'admin_audit';
+
 interface NavbarProps {
-  activeTab: 'dashboard' | 'lineage';
-  onTabChange: (tab: 'dashboard' | 'lineage') => void;
-  onOpenAiQuery: () => void;
+  activeTab: MainNavTab;
+  onTabChange: (tab: MainNavTab) => void;
+  onOpenAiDrawer: () => void;
   connectionStatus: SSEConnectionStatus;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   activeTab,
   onTabChange,
-  onOpenAiQuery,
+  onOpenAiDrawer,
   connectionStatus,
 }) => {
   const { user, isAdmin, logout } = useAuth();
 
   return (
-    <header className="sticky top-0 z-40 bg-dark-950/85 backdrop-blur-xl border-b border-white/10 px-4 sm:px-6 py-3">
+    <header className="sticky top-0 z-40 bg-[#070c16]/90 backdrop-blur-xl border-b border-slate-800 px-4 sm:px-6 py-2.5">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-        {/* Brand & Architecture Badge */}
+        {/* Brand */}
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-gradient-to-tr from-coral-500 to-rose-600 rounded-xl shadow-glow-coral text-white">
+          <div className="p-2 bg-rose-600/20 text-rose-500 rounded-xl border border-rose-500/30">
             <Activity className="w-5 h-5 animate-pulse" />
           </div>
           <div>
             <div className="flex items-center gap-2">
               <span className="font-extrabold text-base tracking-tight text-white">SismoWatch</span>
-              <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-black uppercase tracking-wider bg-coral-500/15 text-coral-400 border border-coral-500/30">
-                SUPERAPP PDD
+              <span className="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold uppercase tracking-wider bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                SuperApp
               </span>
             </div>
-            <p className="text-[10px] text-slate-400 font-mono hidden sm:block">
-              Arquitectura Medallion & Detección en Tiempo Real
+            <p className="text-[10px] text-slate-500 font-mono hidden sm:block">
+              Arquitectura Medallion & Detección Sísmica
             </p>
           </div>
         </div>
 
-        {/* View Switcher (Dashboard vs Lineage) */}
-        <div className="flex items-center p-1 bg-dark-900 rounded-xl border border-white/10">
+        {/* Navigation Tabs based on Role */}
+        <nav className="flex items-center p-1 bg-slate-950 rounded-xl border border-slate-800">
           <button
-            onClick={() => onTabChange('dashboard')}
+            onClick={() => onTabChange('monitoring')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all ${
-              activeTab === 'dashboard'
-                ? 'bg-cobalt-500 text-white shadow-glow-cobalt'
+              activeTab === 'monitoring'
+                ? 'bg-blue-600 text-white shadow'
                 : 'text-slate-400 hover:text-white'
             }`}
           >
             <Activity className="w-3.5 h-3.5" />
-            <span>Operaciones</span>
+            <span>Monitoreo</span>
           </button>
+
           <button
-            onClick={() => onTabChange('lineage')}
+            onClick={() => onTabChange('analytics')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all ${
-              activeTab === 'lineage'
-                ? 'bg-coral-500 text-white shadow-glow-coral'
+              activeTab === 'analytics'
+                ? 'bg-blue-600 text-white shadow'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <BarChart3 className="w-3.5 h-3.5" />
+            <span>Análisis</span>
+          </button>
+
+          <button
+            onClick={() => onTabChange('reports')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all ${
+              activeTab === 'reports'
+                ? 'bg-blue-600 text-white shadow'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <FileText className="w-3.5 h-3.5" />
+            <span>Reportes</span>
+          </button>
+
+          <button
+            onClick={() => onTabChange('pipeline')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all ${
+              activeTab === 'pipeline'
+                ? 'bg-blue-600 text-white shadow'
                 : 'text-slate-400 hover:text-white'
             }`}
           >
             <Workflow className="w-3.5 h-3.5" />
-            <span>Linaje & Auditoría</span>
+            <span>Estado Pipeline</span>
           </button>
-        </div>
 
-        {/* Right Tools & Profile */}
+          {/* Admin Exclusive Tab */}
+          {isAdmin && (
+            <button
+              onClick={() => onTabChange('admin_audit')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all ${
+                activeTab === 'admin_audit'
+                  ? 'bg-rose-600 text-white shadow'
+                  : 'text-rose-400 hover:text-white hover:bg-rose-950/40'
+              }`}
+            >
+              <Shield className="w-3.5 h-3.5" />
+              <span>Auditoría & Cuarentena</span>
+            </button>
+          )}
+        </nav>
+
+        {/* Right Tools & User Profile */}
         <div className="flex items-center gap-2.5">
-          {/* SSE Pulse Indicator */}
-          <div className="hidden md:flex items-center gap-2 px-2.5 py-1 rounded-xl bg-dark-900 border border-white/10 text-[10px] font-mono">
+          {/* Subtle Connection Status Dot */}
+          <div
+            title={
+              connectionStatus === 'connected'
+                ? 'Conexión activa con el servidor'
+                : connectionStatus === 'reconnecting'
+                ? 'Reconectando...'
+                : 'Desconectado'
+            }
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-900 border border-slate-800 text-[10px] font-mono"
+          >
             <span
               className={`w-2 h-2 rounded-full ${
                 connectionStatus === 'connected'
-                  ? 'bg-emerald-400 animate-ping'
+                  ? 'bg-emerald-400 animate-pulse'
                   : connectionStatus === 'reconnecting'
-                  ? 'bg-amber-400 animate-pulse'
+                  ? 'bg-amber-400 animate-ping'
                   : 'bg-rose-500'
               }`}
             />
-            <span
-              className={
-                connectionStatus === 'connected'
-                  ? 'text-emerald-400 font-semibold'
-                  : connectionStatus === 'reconnecting'
-                  ? 'text-amber-400 font-semibold'
-                  : 'text-rose-400 font-semibold'
-              }
-            >
-              {connectionStatus === 'connected'
-                ? 'SSE EN VIVO'
-                : connectionStatus === 'reconnecting'
-                ? 'RECONECTANDO'
-                : 'DESCONECTADO'}
+            <span className="text-slate-400 hidden lg:inline">
+              {connectionStatus === 'connected' ? 'En línea' : 'Reconectando'}
             </span>
           </div>
 
-          {/* AI Assistant Button */}
+          {/* AI Drawer Action Button */}
           <button
-            onClick={onOpenAiQuery}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-dark-900 hover:bg-dark-850 text-cobalt-400 hover:text-cobalt-300 border border-cobalt-500/30 text-xs font-mono font-bold transition-all shadow-sm"
+            onClick={onOpenAiDrawer}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-blue-400 hover:text-blue-300 border border-blue-500/30 text-xs font-mono font-bold transition-all"
           >
             <Sparkles className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Asistente IA SQL</span>
+            <span className="hidden sm:inline">Asistente IA</span>
           </button>
 
-          {/* User Profile Badge */}
+          {/* Role Profile Badge */}
           {user && (
-            <div className="flex items-center gap-2 pl-2 border-l border-white/10">
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-dark-900 border border-white/10">
-                <Shield
-                  className={`w-3.5 h-3.5 ${isAdmin ? 'text-coral-400' : 'text-cobalt-400'}`}
-                />
-                <div className="text-left font-mono">
-                  <div className="text-xs font-bold text-white leading-none">{user.username}</div>
-                  <span
-                    className={`text-[9px] font-bold uppercase tracking-wider ${
-                      isAdmin ? 'text-coral-400' : 'text-cobalt-400'
-                    }`}
-                  >
-                    {user.role}
-                  </span>
+            <div className="flex items-center gap-2 pl-2 border-l border-slate-800">
+              <div
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl border font-mono text-[11px] ${
+                  isAdmin
+                    ? 'bg-rose-950/30 border-rose-800/60 text-rose-300'
+                    : 'bg-blue-950/30 border-blue-800/60 text-blue-300'
+                }`}
+              >
+                {isAdmin ? <Shield className="w-3.5 h-3.5 text-rose-400" /> : <User className="w-3.5 h-3.5 text-blue-400" />}
+                <div className="text-left leading-none">
+                  <div className="font-bold text-white text-[10px]">{user.username}</div>
+                  <div className="text-[9px] uppercase tracking-wider font-extrabold opacity-80">
+                    {isAdmin ? 'ADMINISTRADOR' : 'VIEWER'}
+                  </div>
                 </div>
               </div>
 
               <button
                 onClick={logout}
                 title="Cerrar sesión"
-                className="p-1.5 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-dark-900 transition-colors border border-transparent hover:border-white/10"
+                className="p-1.5 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-slate-900 transition-colors"
               >
                 <LogOut className="w-4 h-4" />
               </button>

@@ -3,7 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { api } from './services/api';
 import { connectSSE, SSEConnectionStatus } from './services/sse';
 import { EarthquakeEvent, KpiData, StatsResponse, AiReport, SeismicAnomaly } from './types';
-import { Navbar } from './components/Navbar';
+import { Navbar, MainNavTab } from './components/Navbar';
 import { KpiCards } from './components/KpiCards';
 import { FiltersBar } from './components/FiltersBar';
 import { SeismicMap } from './components/SeismicMap';
@@ -11,19 +11,16 @@ import { LiveEventsFeed } from './components/LiveEventsFeed';
 import { AnalyticsCharts } from './components/AnalyticsCharts';
 import { EventsTable } from './components/EventsTable';
 import { AiReportCard } from './components/AiReportCard';
-import { QualityPanel } from './components/QualityPanel';
-import { LineagePanel } from './components/LineagePanel';
-import { AiQueryModal } from './components/AiQueryModal';
-import { LoginModal } from './components/LoginModal';
-import { LandingPage } from './components/LandingPage';
-import { BarChart3, Bot, ShieldCheck, ListFilter } from 'lucide-react';
+import { PipelineHealthPanel } from './components/PipelineHealthPanel';
+import { AdminAuditPanel } from './components/AdminAuditPanel';
+import { AiChatDrawer } from './components/AiChatDrawer';
+import { LoginScreen } from './components/LoginScreen';
 
-const DashboardContent: React.FC = () => {
-  const { token, isAuthenticated, setShowLoginModal } = useAuth();
+const MainApp: React.FC = () => {
+  const { token, isAuthenticated, isAdmin } = useAuth();
   const [connectionStatus, setConnectionStatus] = useState<SSEConnectionStatus>('disconnected');
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'lineage'>('dashboard');
-  const [activeAnalyticsSubTab, setActiveAnalyticsSubTab] = useState<'charts' | 'ai' | 'quality' | 'table'>('charts');
-  const [isAiQueryOpen, setIsAiQueryOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<MainNavTab>('monitoring');
+  const [isAiDrawerOpen, setIsAiDrawerOpen] = useState(false);
 
   // Filters State
   const [timeRange, setTimeRange] = useState('24h');
@@ -44,6 +41,13 @@ const DashboardContent: React.FC = () => {
 
   // UI State
   const [loading, setLoading] = useState(true);
+
+  // Ensure Viewer is redirected if trying to access admin_audit
+  useEffect(() => {
+    if (activeTab === 'admin_audit' && !isAdmin) {
+      setActiveTab('monitoring');
+    }
+  }, [activeTab, isAdmin]);
 
   // Fetch Core Data
   const loadDashboardData = useCallback(async () => {
@@ -90,8 +94,10 @@ const DashboardContent: React.FC = () => {
   }, [token, timeRange, minMagnitude, searchRegion, onlyTsunami, page]);
 
   useEffect(() => {
-    loadDashboardData();
-  }, [loadDashboardData]);
+    if (isAuthenticated) {
+      loadDashboardData();
+    }
+  }, [isAuthenticated, loadDashboardData]);
 
   // Connect SSE for Real-time streaming
   useEffect(() => {
@@ -125,36 +131,30 @@ const DashboardContent: React.FC = () => {
     return cleanup;
   }, [token]);
 
-  // If user is not authenticated, render visitor Landing Page
+  // Sin sesión: Vista de Visitante (Solo Login Screen)
   if (!isAuthenticated) {
-    return (
-      <>
-        <LandingPage onOpenLogin={() => setShowLoginModal(true)} />
-        <LoginModal />
-      </>
-    );
+    return <LoginScreen />;
   }
 
   return (
-    <div className="min-h-screen bg-dark-950 text-slate-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-[#080d16] text-slate-100 flex flex-col font-sans">
       {/* Top Navbar */}
       <Navbar
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        onOpenAiQuery={() => setIsAiQueryOpen(true)}
+        onOpenAiDrawer={() => setIsAiDrawerOpen(true)}
         connectionStatus={connectionStatus}
       />
 
       {/* Main Container */}
       <main className="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-6">
-        {activeTab === 'lineage' ? (
-          <LineagePanel />
-        ) : (
-          <>
-            {/* 1. Hero / Resumen: KPIs Esenciales */}
+        {/* Tab 1: Monitoreo & Cartografía Operativa */}
+        {activeTab === 'monitoring' && (
+          <div className="space-y-5 animate-in fade-in duration-150">
+            {/* KPIs */}
             <KpiCards kpis={kpis} loading={loading} />
 
-            {/* 2. Barra Unificada de Filtros */}
+            {/* Barra Unificada de Filtros */}
             <FiltersBar
               timeRange={timeRange}
               onTimeRangeChange={setTimeRange}
@@ -168,7 +168,7 @@ const DashboardContent: React.FC = () => {
               loading={loading}
             />
 
-            {/* 3. Zona de Operaciones: Mapa (60%) + Feed en Vivo (40%) */}
+            {/* Zona de Operaciones: Mapa (60%) + Feed en Vivo (40%) */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
               <div className="lg:col-span-7 w-full">
                 <SeismicMap
@@ -188,96 +188,53 @@ const DashboardContent: React.FC = () => {
                 />
               </div>
             </div>
+          </div>
+        )}
 
-            {/* 4. Sección Analítica Consolidada con Sub-Tabs */}
-            <div className="space-y-4 pt-2">
-              <div className="flex items-center gap-2 border-b border-white/10 pb-3">
-                <button
-                  onClick={() => setActiveAnalyticsSubTab('charts')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all ${
-                    activeAnalyticsSubTab === 'charts'
-                      ? 'bg-cobalt-500 text-white shadow-glow-cobalt'
-                      : 'bg-dark-900 text-slate-400 hover:text-white border border-white/5'
-                  }`}
-                >
-                  <BarChart3 className="w-3.5 h-3.5" />
-                  <span>Distribución & Tendencias</span>
-                </button>
+        {/* Tab 2: Análisis & Gráficos */}
+        {activeTab === 'analytics' && (
+          <div className="space-y-6 animate-in fade-in duration-150">
+            <AnalyticsCharts stats={stats} loading={loading} />
 
-                <button
-                  onClick={() => setActiveAnalyticsSubTab('ai')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all ${
-                    activeAnalyticsSubTab === 'ai'
-                      ? 'bg-cobalt-500 text-white shadow-glow-cobalt'
-                      : 'bg-dark-900 text-slate-400 hover:text-white border border-white/5'
-                  }`}
-                >
-                  <Bot className="w-3.5 h-3.5" />
-                  <span>Boletín Ejecutivo IA</span>
-                </button>
+            <EventsTable
+              events={events}
+              total={totalEvents}
+              page={page}
+              limit={15}
+              totalPages={totalPages}
+              onPageChange={setPage}
+              loading={loading}
+            />
+          </div>
+        )}
 
-                <button
-                  onClick={() => setActiveAnalyticsSubTab('quality')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all ${
-                    activeAnalyticsSubTab === 'quality'
-                      ? 'bg-cobalt-500 text-white shadow-glow-cobalt'
-                      : 'bg-dark-900 text-slate-400 hover:text-white border border-white/5'
-                  }`}
-                >
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  <span>Quality Gate & Cuarentena</span>
-                </button>
+        {/* Tab 3: Reportes Ejecutivos */}
+        {activeTab === 'reports' && (
+          <div className="animate-in fade-in duration-150">
+            <AiReportCard report={report} loading={loading} />
+          </div>
+        )}
 
-                <button
-                  onClick={() => setActiveAnalyticsSubTab('table')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all ${
-                    activeAnalyticsSubTab === 'table'
-                      ? 'bg-cobalt-500 text-white shadow-glow-cobalt'
-                      : 'bg-dark-900 text-slate-400 hover:text-white border border-white/5'
-                  }`}
-                >
-                  <ListFilter className="w-3.5 h-3.5" />
-                  <span>Registro Tabular ({totalEvents})</span>
-                </button>
-              </div>
+        {/* Tab 4: Estado del Pipeline (Resumen para Viewer / Detalle) */}
+        {activeTab === 'pipeline' && (
+          <div className="animate-in fade-in duration-150">
+            <PipelineHealthPanel kpis={kpis} />
+          </div>
+        )}
 
-              {/* Sub-tab views */}
-              {activeAnalyticsSubTab === 'charts' && (
-                <AnalyticsCharts stats={stats} loading={loading} />
-              )}
-
-              {activeAnalyticsSubTab === 'ai' && (
-                <AiReportCard report={report} loading={loading} />
-              )}
-
-              {activeAnalyticsSubTab === 'quality' && (
-                <QualityPanel />
-              )}
-
-              {activeAnalyticsSubTab === 'table' && (
-                <EventsTable
-                  events={events}
-                  total={totalEvents}
-                  page={page}
-                  limit={15}
-                  totalPages={totalPages}
-                  onPageChange={setPage}
-                  loading={loading}
-                />
-              )}
-            </div>
-          </>
+        {/* Tab 5: Auditoría & Cuarentena (Exclusivo Administrador) */}
+        {activeTab === 'admin_audit' && isAdmin && (
+          <div className="animate-in fade-in duration-150">
+            <AdminAuditPanel />
+          </div>
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-white/5 py-4 px-6 text-center text-xs font-mono text-slate-500 bg-dark-950">
-        SismoWatch PDD &bull; Arquitectura Medallion &bull; PostgreSQL 16 &bull; Airflow 2.8.1 &bull; FastAPI SSE &bull; React 18 Leaflet
-      </footer>
-
-      {/* Modals */}
-      <AiQueryModal isOpen={isAiQueryOpen} onClose={() => setIsAiQueryOpen(false)} />
-      <LoginModal />
+      {/* Lateral Slide-Over Drawer: Asistente IA (Text-to-SQL) */}
+      <AiChatDrawer
+        isOpen={isAiDrawerOpen}
+        onClose={() => setIsAiDrawerOpen(false)}
+      />
     </div>
   );
 };
@@ -285,7 +242,7 @@ const DashboardContent: React.FC = () => {
 export const App: React.FC = () => {
   return (
     <AuthProvider>
-      <DashboardContent />
+      <MainApp />
     </AuthProvider>
   );
 };
