@@ -165,20 +165,16 @@ export const QualityPanel: React.FC = () => {
                   </thead>
                   <tbody className="divide-y divide-slate-800 bg-slate-950/40">
                     {quarantineRecords.map((q) => (
-                      <tr key={q.id} className="hover:bg-slate-800/30">
-                        <td className="px-3 py-2 font-mono text-white text-[11px]">{q.id}</td>
+                      <tr key={q.quarantine_id} className="hover:bg-slate-800/30">
+                        <td className="px-3 py-2 font-mono text-white text-[11px]">{q.event_id}</td>
                         <td className="px-3 py-2 text-rose-400 font-semibold">{q.rejection_reason}</td>
                         <td className="px-3 py-2">
-                          <div className="flex flex-wrap gap-1">
-                            {q.failed_rules?.map((r, i) => (
-                              <span key={i} className="px-1.5 py-0.5 bg-rose-950/50 text-rose-300 text-[10px] rounded border border-rose-800/40">
-                                {r}
-                              </span>
-                            ))}
-                          </div>
+                          <span className="px-1.5 py-0.5 bg-rose-950/50 text-rose-300 text-[10px] rounded border border-rose-800/40 font-mono font-bold">
+                            {q.rule_failed}
+                          </span>
                         </td>
                         <td className="px-3 py-2 text-slate-400 text-[11px]">
-                          {new Date(q.quarantine_timestamp).toLocaleString()}
+                          {new Date(q.failed_at).toLocaleString()}
                         </td>
                       </tr>
                     ))}

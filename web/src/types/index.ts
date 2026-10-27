@@ -97,12 +97,13 @@ export interface AiReport {
 }
 
 export interface QuarantineRecord {
-  id: string;
+  quarantine_id: number;
+  event_id: string;
   raw_payload: any;
   rejection_reason: string;
-  failed_rules: string[];
-  ingestion_timestamp: string;
-  quarantine_timestamp: string;
+  rule_failed: string;
+  batch_id: string;
+  failed_at: string;
 }
 
 export interface SqlQueryResult {
