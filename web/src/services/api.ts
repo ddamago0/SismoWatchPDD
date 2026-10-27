@@ -48,10 +48,10 @@ export const api = {
     const query = new URLSearchParams();
     if (params.page) query.append('page', params.page.toString());
     if (params.limit) query.append('limit', params.limit.toString());
-    if (params.min_magnitude !== undefined) query.append('min_mag', params.min_magnitude.toString());
-    if (params.start_time) query.append('start_time', params.start_time);
-    if (params.end_time) query.append('end_time', params.end_time);
-    if (params.search) query.append('search', params.search);
+    if (params.min_magnitude !== undefined) query.append('min_magnitude', params.min_magnitude.toString());
+    if (params.start_time) query.append('start_date', params.start_time.slice(0, 10));
+    if (params.end_time) query.append('end_date', params.end_time.slice(0, 10));
+    if (params.search) query.append('region', params.search);
 
     const res = await fetch(`${API_BASE}/api/events?${query.toString()}`, {
       headers: { ...getAuthHeader() },
