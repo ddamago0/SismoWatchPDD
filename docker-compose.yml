@@ -31,6 +31,7 @@ services:
   # 2. Inicializador de Apache Airflow (Migraciones de BD y Usuario Admin)
   # ============================================================================
   airflow-init:
+    build: ./airflow
     image: sismowatch-airflow:latest
     container_name: sismowatch-airflow-init
     depends_on:
@@ -132,6 +133,7 @@ services:
   # 5. FastAPI Backend (Acceso Exclusivo a curated via sismo_reader)
   # ============================================================================
   api:
+    build: ./api
     image: sismowatch-api:latest
     container_name: sismowatch-api
     restart: unless-stopped
@@ -140,6 +142,8 @@ services:
         condition: service_healthy
     ports:
       - "${API_PORT:-8000}:8000"
+    volumes:
+      - ./api/src:/app/src:ro
     environment:
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432

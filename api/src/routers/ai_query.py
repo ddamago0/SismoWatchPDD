@@ -18,11 +18,34 @@ router = APIRouter(prefix="/api/ai", tags=["IA Analítica"])
 
 
 class SQLQueryRequest(BaseModel):
-    sql_query: str = Field(..., description="Consulta SQL de solo lectura a evaluar")
+    sql_query: Optional[str] = Field(None, description="Consulta SQL de solo lectura a evaluar")
+    query: Optional[str] = Field(None, description="Consulta alternativa o en lenguaje natural")
+    question: Optional[str] = Field(None, description="Pregunta en lenguaje natural")
 
 
-class NaturalQueryRequest(BaseModel):
-    question: str = Field(..., description="Pregunta en lenguaje natural sobre sismos")
+def text_to_sql_translator(natural_text: str) -> str:
+    """
+    Traduce preguntas en lenguaje natural sobre sismos a consultas SELECT seguras sobre curated.
+    """
+    t = natural_text.lower().strip()
+    if t.startswith("select "):
+        return natural_text
+
+    if any(k in t for k in ["mayor", "mas fuerte", "más fuerte", "maxima", "máxima", "fuerte"]):
+        return "SELECT id, mag, place, time, depth_km FROM curated.earthquakes_curated ORDER BY mag DESC LIMIT 5"
+    if "tsunami" in t:
+        return "SELECT id, mag, place, time, alert, tsunami FROM curated.earthquakes_curated WHERE tsunami = 1 ORDER BY time DESC LIMIT 20"
+    if any(k in t for k in ["region", "región", "lugar", "zonas", "top"]):
+        return "SELECT place, COUNT(*) as total_eventos, ROUND(AVG(mag)::numeric, 2) as mag_promedio FROM curated.earthquakes_curated GROUP BY place ORDER BY total_eventos DESC LIMIT 10"
+    if any(k in t for k in ["promedio", "media"]):
+        return "SELECT ROUND(AVG(mag)::numeric, 2) as magnitud_promedio, ROUND(AVG(depth_km)::numeric, 2) as profundidad_promedio_km, COUNT(*) as total_evaluados FROM curated.earthquakes_curated"
+    if any(k in t for k in ["profund", "hondo"]):
+        return "SELECT id, mag, place, depth_km, time FROM curated.earthquakes_curated ORDER BY depth_km DESC LIMIT 10"
+    if any(k in t for k in ["calidad", "score", "pandera", "cuarentena"]):
+        return "SELECT rule_name, passed, total_records, failed_records, error_ratio, evaluated_at FROM curated.quality_results ORDER BY evaluated_at DESC LIMIT 10"
+    
+    # Por defecto sismos más recientes
+    return "SELECT id, mag, place, time, depth_km, alert FROM curated.earthquakes_curated ORDER BY time DESC LIMIT 15"
 
 
 @router.post("/query")
@@ -33,10 +56,21 @@ def execute_guarded_sql(
 ) -> Dict[str, Any]:
     """
     Ejecuta una consulta SQL validada por el motor AST contra la capa curated.
+    Permite SQL directo o preguntas en lenguaje natural (Bono Text-to-SQL).
     Bloquea cualquier sentencia que no sea SELECT de solo lectura.
     """
+    raw_query = request.sql_query or request.query or request.question
+    if not raw_query:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Debe proporcionar 'sql_query', 'query' o 'question'."
+        )
+
+    # Si es lenguaje natural o no empieza con SELECT, traducir a SQL seguro
+    final_sql = text_to_sql_translator(raw_query)
+
     try:
-        safe_sql = validate_read_only_sql(request.sql_query, max_limit=100)
+        safe_sql = validate_read_only_sql(final_sql, max_limit=100)
     except SQLSecurityError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -50,6 +84,7 @@ def execute_guarded_sql(
         columns = list(result.keys())
         rows = [dict(zip(columns, row)) for row in result.fetchall()]
         return {
+            "question": raw_query if raw_query != final_sql else None,
             "executed_sql": safe_sql,
             "row_count": len(rows),
             "columns": columns,

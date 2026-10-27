@@ -42,7 +42,7 @@ class Settings(BaseSettings):
     def database_url(self) -> str:
         """URL de conexión para el rol de lectura estricta sobre schema curated."""
         return (
-            f"postgresql://{self.READ_USER}:{self.READ_PASSWORD}@"
+            f"postgresql+psycopg2://{self.READ_USER}:{self.READ_PASSWORD}@"
             f"{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
         )
 
@@ -50,7 +50,7 @@ class Settings(BaseSettings):
     def admin_database_url(self) -> str:
         """URL de administración para el sembrado inicial de usuarios."""
         return (
-            f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@"
+            f"postgresql+psycopg2://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@"
             f"{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
         )
 

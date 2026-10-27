@@ -58,7 +58,7 @@ def list_reports(
 
 @router.get("/export")
 def export_reports(
-    format: str = Query("csv", regex="^(csv|html)$"),
+    format: str = Query("csv", pattern="^(csv|html)$"),
     current_user: dict = Depends(require_role(["viewer", "admin"])),
     db: Session = Depends(get_db)
 ):
