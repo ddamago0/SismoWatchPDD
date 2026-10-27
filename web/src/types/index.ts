@@ -109,11 +109,15 @@ export interface QuarantineRecord {
 }
 
 export interface SqlQueryResult {
+  sender?: string;
+  reply?: string;
   question?: string | null;
-  executed_sql: string;
-  columns: string[];
-  data: Record<string, any>[];
-  row_count: number;
+  executed_sql?: string | null;
+  columns?: string[];
+  data?: Record<string, any>[];
+  row_count?: number;
+  provider_used?: string;
+  status?: string;
 }
 
 export interface SeismicAnomaly {
