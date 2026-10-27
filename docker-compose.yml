@@ -1,0 +1,32 @@
+services:
+  # ============================================================================
+  # 1. Base de Datos PostgreSQL (Arquitectura Medallion + Roles RBAC)
+  # ============================================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: sismowatch-postgres
+    restart: unless-stopped
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-sismowatch}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      INGEST_USER: ${INGEST_USER:-sismo_ingest}
+      INGEST_PASSWORD: ${INGEST_PASSWORD}
+      TRANSFORM_USER: ${TRANSFORM_USER:-sismo_transform}
+      TRANSFORM_PASSWORD: ${TRANSFORM_PASSWORD}
+      READ_USER: ${READ_USER:-sismo_reader}
+      READ_PASSWORD: ${READ_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-sismowatch}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
+    name: sismowatch_pgdata
