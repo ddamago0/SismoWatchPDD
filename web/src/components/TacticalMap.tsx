@@ -57,9 +57,11 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
   const baseLayerRef = useRef<L.TileLayer | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
   const swarmsLayerRef = useRef<L.LayerGroup | null>(null);
+  const platesLayerRef = useRef<L.GeoJSON | null>(null);
 
   const [currentLayer, setCurrentLayer] = useState<MapLayerType>('satellite');
   const [showSwarms, setShowSwarms] = useState(true);
+  const [showPlates, setShowPlates] = useState(true);
 
   // Initialize Native Leaflet Map
   useEffect(() => {
@@ -156,6 +158,52 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
       swarmsLayerRef.current?.addLayer(circle);
     });
   }, [anomalies, showSwarms]);
+
+  // Load and render Tectonic Plates in Leaflet
+  useEffect(() => {
+    if (!mapInstanceRef.current) return;
+    const map = mapInstanceRef.current;
+
+    if (!showPlates) {
+      if (platesLayerRef.current) {
+        map.removeLayer(platesLayerRef.current);
+        platesLayerRef.current = null;
+      }
+      return;
+    }
+
+    fetch('/tectonic-plates.json')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!data || !mapInstanceRef.current) return;
+        if (platesLayerRef.current) {
+          mapInstanceRef.current.removeLayer(platesLayerRef.current);
+        }
+
+        const layer = L.geoJSON(data, {
+          style: (feature) => {
+            const isSubduction = String(feature?.properties?.Type || '').toLowerCase().includes('subduction');
+            return {
+              color: isSubduction ? '#f43f5e' : '#f59e0b',
+              weight: 1.6,
+              opacity: 0.75,
+              dashArray: '4, 4',
+            };
+          },
+          onEachFeature: (feature, layer) => {
+            const name = feature.properties?.Name || 'Falla Tectónica';
+            const type = feature.properties?.Type || 'Límite de Placa';
+            layer.bindTooltip(`Falla: ${name} (${type})`, {
+              sticky: true,
+              className: 'font-mono text-xs bg-[#171211] text-[#f7f7f9] border-[#2c221f]',
+            });
+          },
+        }).addTo(map);
+
+        platesLayerRef.current = layer;
+      })
+      .catch((err) => console.warn('No se pudo cargar placas en 2D:', err));
+  }, [showPlates]);
 
   // Update Earthquake Markers
   useEffect(() => {
@@ -274,6 +322,19 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
             className="w-3 h-3 accent-[#844dea] rounded cursor-pointer"
           />
           <span className="text-[10px]">Enjambres</span>
+        </label>
+
+        <div className="h-3 w-px bg-[#2c221f] mx-0.5" />
+
+        {/* Toggle Tectonic Plates */}
+        <label className="flex items-center gap-1.5 text-[#fcd34d] cursor-pointer hover:text-white transition-colors">
+          <input
+            type="checkbox"
+            checked={showPlates}
+            onChange={(e) => setShowPlates(e.target.checked)}
+            className="w-3 h-3 accent-[#f59e0b] rounded cursor-pointer"
+          />
+          <span className="text-[10px]">Placas</span>
         </label>
       </div>
 
