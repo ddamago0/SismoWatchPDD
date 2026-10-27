@@ -44,3 +44,56 @@ Todos los cambios notables de este proyecto están documentados aquí siguiendo 
 - Prueba de cuarentena: Inyección de registro con latitud corrupta (150.0) aislada exitosamente en `curated.quality_quarantine` sin llegar a `curated.earthquakes_curated` y reflejada con score 87.5% en `curated.quality_results`.
 - Prueba de idempotencia: Re-ejecución del pipeline sobre el mismo intervalo no generó registros duplicados en `curated.earthquakes_curated`.
 - Prueba de resiliencia IA: Ante 503 de Gemini, el sistema activó automáticamente Groq (`openai/gpt-oss-120b`), validó las cifras exactas y guardó el informe sin interrumpir el pipeline.
+
+## [Fase 4] - 2026-10-27 - Backend FastAPI, RBAC, SSE Streaming y Bono Text-to-SQL con AST Guard
+
+### Añadido
+- **API REST FastAPI (`api/src/`)**: Microservicio desacoplado para consulta y control operativo del lago Medallion.
+- **Autenticación JWT y Roles RBAC (`api/src/auth/`)**:
+  - Emisión de tokens firmados mediante algoritmo HS256 con expiración configurable.
+  - Roles `admin` y `viewer` con verificación de contraseñas Bcrypt.
+  - Dependencias de autorización `require_roles`: rol `viewer` tiene acceso de solo lectura y recibe `403 Forbidden` ante endpoints de cuarentena o administración (`/api/quality/quarantine`, `/api/admin/backfill`, etc.).
+- **Canal de Tiempo Real (`api/src/routers/stream.py`)**:
+  - Servidor Server-Sent Events (SSE) `/api/stream` que transmite eventos sísmicos recientes y latidos periódicos (heartbeats) cada 15 segundos.
+- **Bono Text-to-SQL con Salvaguarda AST (`api/src/services/sql_guard.py` y `api/src/routers/ai_query.py`)**:
+  - Interfaz de consulta en lenguaje natural sobre `curated.earthquakes_curated`.
+  - Salvaguarda sintáctica mediante AST (`sqlparse`): restringe estrictamente a sentencias de tipo `SELECT`, prohíbe palabras clave DDL/DML (`DROP`, `DELETE`, `UPDATE`, `INSERT`, `ALTER`, etc.), valida nombres de tablas autorizadas y fuerza envoltorio de subquery con `LIMIT 100`.
+  - Ejecución blindada en PostgreSQL dentro de una transacción de solo lectura: `SET TRANSACTION READ ONLY;`.
+
+### Verificado
+- Autenticación JWT con credenciales cifradas y mitigación de fuerza bruta vía Rate Limiting (SlowAPI).
+- Enrutamiento RBAC: `GET /api/quality/quarantine` rechaza a `viewer` con `403 Forbidden` y permite el acceso a `admin` con `200 OK`.
+- Bloqueo efectivo de inyecciones SQL mediante `sql_guard`: intentos maliciosos son rechazados antes de llegar al motor relacional.
+
+## [Fase 5] - 2026-10-27 - Frontend Dashboard React 18, Mapas Leaflet, Modo Linaje & Auditoría y Exportación Imprimible
+
+### Añadido
+- **Frontend SPA React 18 + TypeScript + Vite (`web/`)**:
+  - Interfaz analítica reactiva servida con Nginx Alpine en puerto 3000.
+  - **KPIs en Vivo**: Tarjetas de total eventos 24h, magnitud máxima, promedio, alertas de tsunami y score de calidad.
+  - **Mapa Interactivo Leaflet (`SeismicMap.tsx`)**: Marcadores circulares proporcionales a la magnitud con paleta de severidad semántica (verde, amarillo, naranja, rojo), popup con metadatos completos y botón de zoom centrado.
+  - **Tabla Paginada de Eventos (`EventsTable.tsx`)**: Búsqueda por texto en ubicación y código, filtrado por magnitud mínima y severidad, y paginación rápida.
+  - **Panel de Cuarentena (`QuarantinePanel.tsx`)**: Vista exclusiva para usuarios administradores con motivo de rechazo y regla violada.
+  - **Servicio SSE con Reconexión Automática (`web/src/services/sse.ts`)**: Manejo de estados de conexión (`connected`, `reconnecting`, `disconnected`) con retroceso exponencial (1s hasta 30s) e indicador visual "En Vivo" en el Navbar.
+  - **Diseño de Estados Explícitos**: Manejo de carga (Spinners/Skeletons), listas vacías (Empty States) y errores de conexión con reintentos manuales.
+
+## [Fase 6] - 2026-10-27 - Arquitectura Enterprise "El Plus": Linaje End-to-End, Clustering Haversine y Auditoría Completa
+
+### Añadido
+- **Gobernanza y Linaje de Datos End-to-End (`api/src/routers/pipeline.py` y `web/src/components/LineagePanel.tsx`)**:
+  - Endpoint `GET /api/pipeline/lineage` exponiendo el grafo de dependencias de 11 nodos y 13 aristas (Fuentes USGS -> Raw Bronze -> Staging Silver -> Quality Gate Pandera -> Curated Gold).
+  - Demostración formal de la **Ecuación de Conciliación Matemática**:
+    $$N_{\text{raw}} = N_{\text{curated}} + N_{\text{quarantine}} + N_{\text{duplicates}}$$
+  - Vista gráfica interactiva en la UI con métricas de salud, tasa de aislamiento de calidad y retraso de frescura en segundos.
+- **Detección Avanzada de Enjambres Sísmicos ("Swarm Events") (`airflow/include/anomaly_detection.py`)**:
+  - Algoritmo de clustering geodésico utilizando la **Fórmula de Haversine** ($R = 6371\text{ km}$):
+    $$d = 2R \arcsin\left(\sqrt{\sin^2\left(\frac{\Delta \phi}{2}\right) + \cos \phi_1 \cos \phi_2 \sin^2\left(\frac{\Delta \lambda}{2}\right)}\right)$$
+  - Identificación de racimos de $\ge 3$ eventos sísmicos concentrados en un radio geográfico $\le 75\text{ km}$ dentro de una ventana temporal común.
+  - Persistencia de anomalías espaciales y picos estadísticos (Z-Score) en `curated.seismic_anomalies`.
+  - Capa de Enjambres Sísmicos en el mapa interactivo con círculos punteados púrpuras y switch de activación.
+- **Exportación Ejecutiva Imprimible / PDF (`api/src/routers/reports.py`)**:
+  - Generación de boletín oficial en HTML semántico con reglas CSS `@media print` para formato A4 portrait, cortes de página limpios y botón nativo `🖨️ Imprimir / Guardar como PDF`.
+- **Suite de Pruebas Automatizadas y Auditoría de Seguridad**:
+  - 35 pruebas unitarias e integrales (`pytest tests/ -v`) con 100% de éxito en 0.90 segundos.
+  - Escaneos de seguridad estáticos documentados en `docs/security/`: Bandit (SAST AST), Pip-audit (CVEs) y Gitleaks (Detección de secretos: 0 leaks).
+
