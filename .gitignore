@@ -52,3 +52,8 @@ Thumbs.db
 # Temporales de análisis
 scratch/
 tmp/
+
+# Material de contexto de la prueba (PDFs, ZIPs externos de referencia)
+Contexto/
+contexto/
+*.zip
