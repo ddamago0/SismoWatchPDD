@@ -112,3 +112,44 @@ def get_distributions(
         "magnitude_distribution": magnitude_dist,
         "top_regions": top_regions
     }
+
+
+@router.get("/anomalies")
+def get_seismic_anomalies(
+    limit: int = 50,
+    current_user: dict = Depends(require_role(["viewer", "admin"])),
+    db: Session = Depends(get_db)
+):
+    """
+    Retorna el registro histórico y reciente de anomalías sísmicas y
+    enjambres detectados (Swarm Events) mediante Z-Score y agrupamiento geodésico Haversine.
+    """
+    try:
+        sql = text("""
+            SELECT id, anomaly_type, region, event_id, cluster_size, latitude, longitude,
+                   radius_km, z_score, max_magnitude, severity, explanation, detected_at
+            FROM curated.seismic_anomalies
+            ORDER BY detected_at DESC
+            LIMIT :limit;
+        """)
+        rows = db.execute(sql, {"limit": limit}).fetchall()
+        return [
+            {
+                "id": r[0],
+                "type": r[1],
+                "region": r[2],
+                "event_id": r[3],
+                "cluster_size": int(r[4] or 1),
+                "latitude": float(r[5]) if r[5] is not None else None,
+                "longitude": float(r[6]) if r[6] is not None else None,
+                "radius_km": float(r[7]) if r[7] is not None else None,
+                "z_score": float(r[8]) if r[8] is not None else None,
+                "max_magnitude": float(r[9]) if r[9] is not None else None,
+                "severity": r[10],
+                "explanation": r[11],
+                "detected_at": r[12].isoformat() if r[12] else None
+            }
+            for r in rows
+        ]
+    except Exception:
+        return []

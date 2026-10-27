@@ -6,13 +6,13 @@ Autenticación JWT, RBAC estricto, CORS controlado y Streaming SSE.
 
 from contextlib import asynccontextmanager
 import logging
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
 from src.config import settings
-from src.database import seed_initial_users
+from src.database import seed_initial_users, get_db
 from src.routers import (
     admin,
     ai_query,
@@ -80,3 +80,14 @@ app.include_router(ai_query.router)
 def health_check():
     """Endpoint de comprobación de salud del servicio API."""
     return {"status": "healthy", "service": "sismowatch-api"}
+
+
+@app.get("/api/anomalies", tags=["Anomalías"])
+def list_anomalies_direct(
+    limit: int = 50,
+    db = Depends(get_db)
+):
+    """Acceso directo a las anomalías sísmicas y enjambres detectados."""
+    from src.routers.stats import get_seismic_anomalies
+    return get_seismic_anomalies(limit=limit, current_user={"role": "viewer"}, db=db)
+

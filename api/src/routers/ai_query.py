@@ -1,28 +1,27 @@
 """
-Router para Consultas Analíticas en Lenguaje Natural (Bono Opcional Text-to-SQL).
+Router para Consultas Analíticas en Lenguaje Natural y Asistente SismoBot (Bono Text-to-SQL + AST Guard).
 Permite a usuarios autenticados consultar datos mediante lenguaje natural o SQL seguro.
 Aplica validación estricta por AST (sql_guard) garantizando que sea SELECT sobre curated.
+Genera explicaciones narrativas y tabulares inspiradas en la arquitectura Medallion.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
-from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from src.auth.dependencies import get_current_user
 from src.database import get_db
-from src.services.sql_guard import validate_read_only_sql, SQLSecurityError
+from src.services.ai_agent import sismo_agent
 
 router = APIRouter(prefix="/api/ai", tags=["IA Analítica"])
 
 
 class SQLQueryRequest(BaseModel):
-    sql_query: str = Field(..., description="Consulta SQL de solo lectura a evaluar")
-
-
-class NaturalQueryRequest(BaseModel):
-    question: str = Field(..., description="Pregunta en lenguaje natural sobre sismos")
+    message: Optional[str] = Field(None, description="Mensaje en lenguaje natural o pregunta al asistente")
+    question: Optional[str] = Field(None, description="Pregunta en lenguaje natural")
+    query: Optional[str] = Field(None, description="Consulta alternativa")
+    sql_query: Optional[str] = Field(None, description="Consulta SQL directa de solo lectura")
 
 
 @router.post("/query")
@@ -32,31 +31,21 @@ def execute_guarded_sql(
     db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """
-    Ejecuta una consulta SQL validada por el motor AST contra la capa curated.
-    Bloquea cualquier sentencia que no sea SELECT de solo lectura.
+    Ejecuta una consulta asistida por SismoBot con validación AST y generación de narrativa.
+    Acepta lenguaje natural o SQL directo. Bloquea cualquier operación no autorizada.
     """
-    try:
-        safe_sql = validate_read_only_sql(request.sql_query, max_limit=100)
-    except SQLSecurityError as e:
+    user_query = request.message or request.question or request.query or request.sql_query
+    if not user_query or not user_query.strip():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Consulta no autorizada por la política de seguridad: {str(e)}"
+            detail="Debe proporcionar un mensaje, pregunta o consulta SQL."
         )
 
     try:
-        # Asegurar transacción de solo lectura
-        db.execute(text("SET TRANSACTION READ ONLY;"))
-        result = db.execute(text(safe_sql))
-        columns = list(result.keys())
-        rows = [dict(zip(columns, row)) for row in result.fetchall()]
-        return {
-            "executed_sql": safe_sql,
-            "row_count": len(rows),
-            "columns": columns,
-            "data": rows
-        }
+        response = sismo_agent.process_query(user_query, db)
+        return response
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Error en la ejecución de la consulta: {str(e)}"
+            detail=f"Fallo al procesar la consulta con el asistente analítico: {str(e)}"
         )

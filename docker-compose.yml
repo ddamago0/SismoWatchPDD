@@ -31,6 +31,7 @@ services:
   # 2. Inicializador de Apache Airflow (Migraciones de BD y Usuario Admin)
   # ============================================================================
   airflow-init:
+    build: ./airflow
     image: sismowatch-airflow:latest
     container_name: sismowatch-airflow-init
     depends_on:
@@ -132,6 +133,7 @@ services:
   # 5. FastAPI Backend (Acceso Exclusivo a curated via sismo_reader)
   # ============================================================================
   api:
+    build: ./api
     image: sismowatch-api:latest
     container_name: sismowatch-api
     restart: unless-stopped
@@ -140,6 +142,8 @@ services:
         condition: service_healthy
     ports:
       - "${API_PORT:-8000}:8000"
+    volumes:
+      - ./api/src:/app/src:ro
     environment:
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
@@ -159,12 +163,39 @@ services:
       AIRFLOW_API_URL: http://airflow-webserver:8080/api/v1
       AIRFLOW_ADMIN_USER: ${AIRFLOW_ADMIN_USER:-admin}
       AIRFLOW_ADMIN_PASSWORD: ${AIRFLOW_ADMIN_PASSWORD}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.8-flash}
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      GROQ_MODEL: ${GROQ_MODEL:-openai/gpt-oss-120b}
     healthcheck:
       test: ["CMD-SHELL", "curl --fail http://localhost:8000/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
+
+  # ============================================================================
+  # 6. Frontend Web (React + TypeScript + Vite + Tailwind + Leaflet)
+  # ============================================================================
+  web:
+    build:
+      context: ./web
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
+    image: sismowatch-web:latest
+    container_name: sismowatch-web
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3000 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
 volumes:
   pgdata:
