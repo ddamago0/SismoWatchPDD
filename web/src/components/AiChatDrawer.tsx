@@ -289,47 +289,46 @@ export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({ isOpen, onClose }) =
       {/* Backdrop */}
       <div
         onClick={onClose}
-        className="fixed inset-0 z-[9998] bg-black/75 backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
+        className="fixed inset-0 z-[9998] bg-[#0c0a09]/75 backdrop-blur-sm transition-opacity duration-200"
       />
 
       {/* Lateral Slide-Over Drawer */}
-      <div className="fixed top-0 right-0 bottom-0 w-full sm:w-[560px] z-[9999] bg-[#090e1a] border-l border-slate-800 shadow-2xl flex flex-col animate-in slide-in-from-right duration-200 select-none">
+      <div className="fixed top-0 right-0 bottom-0 w-full sm:w-[560px] z-[9999] bg-[#161211] border-l border-[#241c19] shadow-2xl flex flex-col animate-in slide-in-from-right duration-200 select-none">
         {/* Drawer Header */}
-        <div className="p-4 bg-[#060911] border-b border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-600/20 text-blue-400 rounded-xl border border-blue-500/30">
-              <Bot className="w-5 h-5 animate-pulse" />
+        <div className="p-3.5 bg-[#120e0d] border-b border-[#241c19] flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-[#241a2e] text-[#d5c4fb] flex items-center justify-center border border-[#4a365f]/50">
+              <Bot className="w-4 h-4 animate-pulse text-[#d5c4fb]" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-white tracking-tight">
+                <h3 className="text-xs font-semibold text-[#f7f7f9] tracking-tight">
                   SismoBot &bull; Asistente Analítico
                 </h3>
-                <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
-                  <ShieldCheck className="w-3 h-3" />
+                <span className="px-1.5 py-0.2 rounded text-[8px] font-mono font-bold uppercase bg-[#1e2e22] text-[#86efac] border border-[#2b5235]">
                   AST GUARD
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 font-mono">
-                Text-to-SQL y Resúmenes Ejecutivos sobre Medallion Curated
+              <p className="text-[10px] text-[#9b9baa] font-mono">
+                Text-to-SQL y Resúmenes sobre Medallion Curated
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             <button
               onClick={handleClearChat}
               title="Limpiar conversación"
-              className="p-1.5 text-slate-400 hover:text-rose-400 rounded-lg hover:bg-slate-800 transition-colors"
+              className="p-1.5 text-[#9b9baa] hover:text-[#f87171] rounded-lg hover:bg-[#201a18] transition-colors"
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={onClose}
               title="Cerrar cajón"
-              className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+              className="p-1.5 text-[#9b9baa] hover:text-[#f7f7f9] rounded-lg hover:bg-[#201a18] transition-colors"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -346,23 +345,23 @@ export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({ isOpen, onClose }) =
               >
                 {/* Avatar */}
                 <div
-                  className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border shadow-md ${
+                  className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border ${
                     isUser
-                      ? 'bg-blue-600/20 text-blue-300 border-blue-500/30'
-                      : 'bg-indigo-600/20 text-indigo-300 border-indigo-500/30'
+                      ? 'bg-[#844dea]/20 text-[#d5c4fb] border-[#844dea]/40'
+                      : 'bg-[#241a2e] text-[#d5c4fb] border-[#4a365f]/50'
                   }`}
                 >
-                  {isUser ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
+                  {isUser ? <User className="w-3.5 h-3.5" /> : <Bot className="w-3.5 h-3.5" />}
                 </div>
 
                 {/* Message Bubble Container */}
-                <div className={`max-w-[85%] space-y-1.5 ${isUser ? 'items-end' : 'items-start'}`}>
+                <div className={`max-w-[85%] space-y-1 ${isUser ? 'items-end' : 'items-start'}`}>
                   {/* Bubble */}
                   <div
-                    className={`p-3.5 rounded-2xl text-xs ${
+                    className={`p-3 rounded-xl text-xs ${
                       isUser
-                        ? 'bg-blue-600 text-white rounded-tr-none shadow-lg'
-                        : 'bg-[#0f172a] border border-slate-800 text-slate-200 rounded-tl-none shadow-md'
+                        ? 'bg-[#844dea] text-white rounded-tr-none shadow-sm'
+                        : 'bg-[#1a1413] border border-[#28201d] text-[#ececf1] rounded-tl-none shadow-sm'
                     }`}
                   >
                     {isUser ? (
@@ -378,14 +377,14 @@ export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({ isOpen, onClose }) =
 
                     {/* Collapsible SQL Audit Section */}
                     {!isUser && msg.executed_sql && (
-                      <div className="mt-3 pt-2.5 border-t border-slate-800/80">
+                      <div className="mt-2.5 pt-2 border-t border-[#28201d]">
                         <button
                           onClick={() => toggleSqlView(msg.id)}
-                          className="flex items-center gap-1.5 text-[10px] font-mono text-blue-400 hover:text-blue-300 font-bold transition-colors"
+                          className="flex items-center gap-1.5 text-[10px] font-mono text-[#d5c4fb] hover:text-white font-medium transition-colors"
                         >
                           <Terminal className="w-3 h-3" />
                           <span>
-                            {showSqlFor[msg.id] ? 'Ocultar SQL Auditado' : 'Ver SQL Auditado (AST)'}
+                            {showSqlFor[msg.id] ? 'Ocultar SQL' : 'Ver SQL Auditado (AST)'}
                           </span>
                           {showSqlFor[msg.id] ? (
                             <ChevronUp className="w-3 h-3" />
@@ -395,12 +394,12 @@ export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({ isOpen, onClose }) =
                         </button>
 
                         {showSqlFor[msg.id] && (
-                          <div className="mt-2 p-2.5 bg-[#05080f] rounded-xl border border-slate-800">
-                            <div className="flex items-center justify-between text-[9px] font-mono text-slate-400 mb-1">
-                              <span className="text-emerald-400 font-bold">PostgreSQL 16 &bull; Solo Lectura</span>
+                          <div className="mt-1.5 p-2 bg-[#100d0c] rounded-lg border border-[#241c19]">
+                            <div className="flex items-center justify-between text-[9px] font-mono text-[#9b9baa] mb-1">
+                              <span className="text-[#86efac] font-medium">PostgreSQL 16 &bull; Solo Lectura</span>
                               <span>{msg.row_count} fila(s)</span>
                             </div>
-                            <pre className="text-[10px] font-mono text-emerald-400 overflow-x-auto whitespace-pre-wrap leading-relaxed">
+                            <pre className="text-[10px] font-mono text-[#86efac] overflow-x-auto whitespace-pre-wrap leading-relaxed">
                               {msg.executed_sql}
                             </pre>
                           </div>
@@ -410,12 +409,12 @@ export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({ isOpen, onClose }) =
                   </div>
 
                   {/* Metadata Footer */}
-                  <div className={`flex items-center gap-2 px-1 text-[9px] font-mono text-slate-500 ${isUser ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`flex items-center gap-2 px-1 text-[9px] font-mono text-[#737384] ${isUser ? 'justify-end' : 'justify-start'}`}>
                     <span>{msg.timestamp}</span>
                     {msg.provider_used && (
                       <>
                         <span>&bull;</span>
-                        <span className="text-slate-400">{msg.provider_used}</span>
+                        <span className="text-[#9b9baa]">{msg.provider_used}</span>
                       </>
                     )}
                   </div>
@@ -426,13 +425,13 @@ export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({ isOpen, onClose }) =
 
           {/* Thinking Indicator */}
           {loading && (
-            <div className="flex gap-3 items-start">
-              <div className="w-8 h-8 rounded-xl bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 flex items-center justify-center shrink-0">
-                <Bot className="w-4 h-4 animate-spin" />
+            <div className="flex gap-2.5 items-start">
+              <div className="w-7 h-7 rounded-lg bg-[#241a2e] text-[#d5c4fb] border border-[#4a365f]/50 flex items-center justify-center shrink-0">
+                <Bot className="w-3.5 h-3.5 animate-spin" />
               </div>
-              <div className="p-3.5 rounded-2xl rounded-tl-none bg-[#0f172a] border border-slate-800 text-xs text-slate-300 flex items-center gap-2.5 shadow-md">
-                <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />
-                <span className="font-mono text-[11px]">SismoBot está analizando los datos sismológicos...</span>
+              <div className="p-3 rounded-xl rounded-tl-none bg-[#1a1413] border border-[#28201d] text-xs text-[#9b9baa] flex items-center gap-2">
+                <Loader2 className="w-3.5 h-3.5 text-[#d5c4fb] animate-spin" />
+                <span className="font-mono text-[11px]">Consultando capa Curated...</span>
               </div>
             </div>
           )}
@@ -441,18 +440,18 @@ export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({ isOpen, onClose }) =
         </div>
 
         {/* Suggested Queries Chips Bar */}
-        <div className="p-2.5 bg-[#070b14] border-t border-slate-800/80">
-          <div className="flex items-center gap-1.5 text-[10px] font-mono text-slate-400 mb-1.5 px-1 font-bold">
-            <HelpCircle className="w-3 h-3 text-blue-400" />
-            <span>Consultas frecuentes sugeridas:</span>
+        <div className="p-2 bg-[#120e0d] border-t border-[#241c19]">
+          <div className="flex items-center gap-1 text-[9px] font-mono text-[#9b9baa] mb-1 px-1">
+            <HelpCircle className="w-3 h-3 text-[#d5c4fb]" />
+            <span>Consultas sugeridas:</span>
           </div>
-          <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+          <div className="flex gap-1 overflow-x-auto pb-0.5 scrollbar-none">
             {SUGGESTED_PROMPTS.map((prompt, idx) => (
               <button
                 key={idx}
                 onClick={() => sendMessage(prompt)}
                 disabled={loading}
-                className="px-2.5 py-1 rounded-lg text-[10px] font-mono bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 hover:border-slate-700 whitespace-nowrap shrink-0 transition-all disabled:opacity-50"
+                className="px-2 py-0.5 rounded-md text-[10px] font-mono bg-[#171211] hover:bg-[#201a18] text-[#9b9baa] hover:text-[#f7f7f9] border border-[#241c19] hover:border-[#382f2c] whitespace-nowrap shrink-0 transition-all disabled:opacity-50"
               >
                 {prompt}
               </button>
@@ -461,7 +460,7 @@ export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({ isOpen, onClose }) =
         </div>
 
         {/* Input Bar */}
-        <form onSubmit={handleSubmit} className="p-3 bg-[#060911] border-t border-slate-800 flex items-center gap-2">
+        <form onSubmit={handleSubmit} className="p-2.5 bg-[#120e0d] border-t border-[#241c19] flex items-center gap-2">
           <input
             ref={inputRef}
             type="text"
@@ -469,15 +468,15 @@ export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({ isOpen, onClose }) =
             onChange={(e) => setInputText(e.target.value)}
             disabled={loading}
             placeholder="Pregunta en lenguaje natural o escribe un SELECT..."
-            className="flex-grow px-3.5 py-2.5 rounded-xl bg-[#0b1220] border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 font-mono disabled:opacity-50"
+            className="flex-grow px-3 py-2 rounded-lg bg-[#171211] border border-[#241c19] text-xs text-[#ececf1] placeholder-[#5c4d47] focus:outline-none focus:border-[#844dea] font-mono disabled:opacity-50"
           />
 
           <button
             type="submit"
             disabled={loading || !inputText.trim()}
-            className="p-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-600/30 transition-all disabled:opacity-40 disabled:hover:bg-blue-600 shrink-0"
+            className="p-2 rounded-lg bg-[#844dea] hover:bg-[#9f73f2] text-white shadow-sm transition-all disabled:opacity-40 disabled:hover:bg-[#844dea] shrink-0"
           >
-            <Send className="w-4 h-4" />
+            <Send className="w-3.5 h-3.5" />
           </button>
         </form>
       </div>

@@ -1,148 +1,177 @@
-# 🌍 SismoWatch PDD — Monitoreo Sísmico y Automatización con IA (SuperApp)
+# SismoWatch PDD — Monitoreo Sismico y Automatizacion con IA (SuperApp)
 
-> **Prueba de Desempeño — Ruta de IA y Automatización**  
-> Sistema integral de ingestión en streaming, procesamiento bajo arquitectura Medallion, calidad de datos con Pandera, cascada de IA generativa con validador anti-alucinaciones numérico y dashboard reactivo con Server-Sent Events.
-
----
-
-## 📋 Resumen Ejecutivo
-
-SismoWatch es una plataforma diseñada para que los equipos operativos y de logística de **SuperApp** tomen decisiones preventivas en tiempo real ante eventos sísmicos a nivel global y regional.
-
-El sistema monitoriza continuamente los feeds oficiales del Servicio Geológico de los Estados Unidos (**USGS**), normaliza y valida los datos mediante contratos estrictos de esquema (desviando anomalías a una **Zona de Cuarentena**), detecta enjambres sísmicos mediante **Z-Score** y genera boletines ejecutivos automatizados mediante una **cascada de IA multi-modelo** (Gemini -> Groq -> Plantilla) protegida contra alucinaciones numéricas.
+> **Prueba de Desempeno — Ruta de IA y Automatizacion**  
+> Plataforma integral de ingenieria de datos para ingestion continua, procesamiento bajo arquitectura Medallion, calidad deterministica con Pandera, cascada de IA multimodelo protegida por AST y validador anti-alucinaciones numerico, con consola de observabilidad minimalista basada en Server-Sent Events.
 
 ---
 
-## 🏗️ Arquitectura del Sistema
+## Resumen Ejecutivo
 
-El flujo de datos sigue el estándar industrial **Medallion Architecture** sobre PostgreSQL 16 con aislamiento estricto de roles de base de datos (Mínimo Privilegio):
+SismoWatch es una plataforma empresarial disenada para que los equipos operativos y de logistica de SuperApp tomen decisiones preventivas en tiempo real ante eventos sismicos a nivel global y regional.
+
+El sistema monitoriza continuamente los feeds oficiales del Servicio Geologico de los Estados Unidos (USGS), normaliza y valida los datos mediante contratos estrictos de esquema (aislando anomalias en una Zona de Cuarentena auditada), detecta enjambres sismicos mediante formulas geodesicas Haversine y Z-Score, y provee analisis predictivo y consultivo mediante SismoBot: un asistente Text-to-SQL con salvaguarda AST y cascada multi-proveedor (Groq gpt-oss-120b y Gemini Flash con respaldo determinista).
+
+---
+
+## Arquitectura del Sistema
+
+El flujo de datos sigue el estandar industrial Medallion Architecture sobre PostgreSQL 16 con aislamiento estricto de roles de base de datos segun el principio de minimo privilegio (PoLP):
 
 ```mermaid
 flowchart LR
-    USGS["USGS Live API"] -->|Airflow Ingest| Bronze["🥉 Capa Bronze (raw)\nJSONB inmutable"]
-    Bronze -->|Airflow Transform| Silver["🥈 Capa Silver (staging)\nNormalizado UTC"]
-    Silver -->|Pandera Check| Gold["🥇 Capa Gold (curated)\nDatos validados"]
-    Silver -.->|Rechazo Calidad| Quarantine["⚠️ Cuarentena\n(Lat/Lon/Mag erróneos)"]
-    Gold -->|LLM Cascade| Reports["🤖 Reportes IA\nValidados con Regex"]
-    Gold -->|sismo_reader role| API["⚡ FastAPI Backend\nJWT + RBAC + SSE"]
-    API -->|Live EventStream| UI["💻 React + Vite + Leaflet\nDashboard en Tiempo Real"]
+    USGS["USGS Live API"] -->|Airflow Ingest| Bronze["Capa Bronze (raw)\nJSONB inmutable"]
+    Bronze -->|Airflow Transform| Silver["Capa Silver (staging)\nNormalizado UTC"]
+    Silver -->|Pandera Check| Gold["Capa Gold (curated)\nDatos validados"]
+    Silver -.->|Rechazo Calidad| Quarantine["Cuarentena\nLat/Lon/Mag anomalos"]
+    Gold -->|LLM Cascade| Reports["Reportes IA\nValidados con Regex"]
+    Gold -->|sismo_reader role| API["FastAPI Backend\nJWT + RBAC + SSE"]
+    API -->|Live EventStream| UI["React + Vite + Leaflet\nDashboard en Tiempo Real"]
 ```
 
-Para ver la documentación completa y detallada de la arquitectura, consulta [docs/ARQUITECTURA.md](docs/ARQUITECTURA.md).
+Para la especificacion tecnica completa, consultar [docs/ARQUITECTURA.md](docs/ARQUITECTURA.md).
 
 ---
 
-## 🚀 Puesta en Marcha en Frío (Un Solo Comando)
+## Puesta en Marcha (Un Solo Comando)
 
-Para desplegar y verificar el sistema completo de punta a punta (Postgres, API, Frontend, Ingesta inicial de datos en vivo de USGS y reporte IA):
+Para desplegar y verificar el sistema completo de extremo a extremo (PostgreSQL, Airflow, API FastAPI, Frontend React, ingesta inicial en vivo de USGS y reporte IA):
 
 ```bash
 bash scripts/bootstrap.sh
 ```
 
-El script ejecutará automáticamente:
-1. Verificación y generación de secretos criptográficos en `.env`.
+El script ejecutara automaticamente:
+1. Verificacion y generacion de secretos criptograficos en `.env`.
 2. Despliegue de los contenedores Docker (`postgres`, `api`, `web`).
-3. Espera de healthchecks en base de datos y backend.
-4. Ingesta inicial en vivo de USGS hacia Bronze, Silver y Gold con validación Pandera.
-5. Inyección de sismo de prueba en cuarentena para auditoría forense.
+3. Verificacion de estado y healthchecks en base de datos y backend.
+4. Ingesta inicial en vivo de USGS hacia Bronze, Silver y Gold con validacion Pandera.
+5. Inyeccion controlada de sismo en cuarentena para auditoria forense.
 6. Siembra del reporte ejecutivo de IA en base de datos.
-7. Impresión de credenciales de acceso y URLs operativas.
+7. Impresion de credenciales de acceso y URLs de servicio.
 
 ---
 
-## 🌐 Servicios y Puertos
+## Servicios y Puertos
 
-| Servicio | URL / Puerto | Descripción | Healthcheck |
+| Servicio | URL / Puerto | Descripcion | Healthcheck |
 |---|---|---|---|
-| **Frontend Web** | [http://localhost:3000](http://localhost:3000) | Dashboard React, Leaflet Map, Recharts y SSE | Nginx Static SPA |
+| **Frontend Web** | [http://localhost:3000](http://localhost:3000) | Dashboard React, Leaflet Satellite Map, Recharts y SSE | Nginx Static SPA |
 | **API Backend** | [http://localhost:8000](http://localhost:8000) | FastAPI REST API, JWT RBAC y Streaming | `GET /health` |
-| **Swagger Docs** | [http://localhost:8000/docs](http://localhost:8000/docs) | Documentación interactiva OpenAPI | `GET /docs` |
+| **Documentacion OpenAPI** | [http://localhost:8000/docs](http://localhost:8000/docs) | Swagger UI interactivo | `GET /docs` |
 | **PostgreSQL 16** | `localhost:5432` | Base de datos relacional Medallion | `pg_isready` |
-| **Airflow Web** | [http://localhost:8080](http://localhost:8080) | Orquestador de DAGs y Pipelines | Airflow Webserver |
+| **Apache Airflow** | [http://localhost:8080](http://localhost:8080) | Orquestador de DAGs y Pipelines | Airflow Webserver |
 
 ---
 
-## 🔐 Credenciales y Roles de Acceso (RBAC)
+## Modelo de Seguridad y Roles de Acceso (RBAC)
 
-Las contraseñas se generan de forma aleatoria y segura en el archivo `.env`. Puedes consultarlas con `cat .env | grep PASSWORD` o usar las variables cargadas:
+El acceso a la plataforma y sus endpoints esta estrictamente gobernado por perfiles de usuario y tokens JWT con expiracion temporal:
 
-| Rol | Usuario | Permisos de Sistema | Comprobación RBAC |
+| Capacidad / Vista | Visitante (sin login) | Viewer (Analista) | Admin (Auditor) |
 |---|---|---|---|
-| **Administrador** | `admin` | Acceso total: KPIs, Eventos, Reportes IA, **Panel de Cuarentena** y Disparo de Remediaciones | Acceso autorizado `200 OK` en `/api/quality/quarantine` |
-| **Visualizador** | `viewer` | Solo lectura operativa: KPIs, Eventos, Mapa en vivo, Reportes IA | Acceso denegado `403 Forbidden` en `/api/quality/quarantine` |
+| Ver Landing Page Informativa | Si | Si | Si |
+| Ver Dashboard Operativo (KPIs, Graficos, Mapa) | No | Si | Si |
+| Ver Eventos en Tiempo Real (SSE Stream) | No | Si | Si |
+| Ver y Exportar Reportes (CSV / HTML / Impresion) | No | Si | Si |
+| Consultar SismoBot IA (Text-to-SQL AST Guard) | No | Si | Si |
+| Ver Estado del Pipeline (Resumen de Calidad) | No | Si (resumen) | Si (detalle) |
+| Ver Registros en Cuarentena de Calidad | No | No (403 Forbidden) | Si |
+| Disparar DAGs Airflow (Ingesta, Backfill, IA) | No | No (403 Forbidden) | Si |
+
+### Roles de Base de Datos PostgreSQL:
+- `sismo_ingest`: Solo permisos INSERT/UPDATE en esquema `raw`.
+- `sismo_transform`: Lectura en `raw`, lectura/escritura en `staging` y `curated`.
+- `sismo_reader`: Unicamente SELECT en esquemas `curated` y vistas analiticas. Sin permisos DDL ni DML en ninguna tabla.
 
 ---
 
-## 🧪 Suite de Pruebas Automatizadas (Pytest)
+## Suite de Pruebas Automatizadas (Pytest)
 
-El proyecto cuenta con **31 pruebas automatizadas** de extremo a extremo que cubren todas las capas críticas del sistema:
+El proyecto cuenta con **35 pruebas automatizadas** de extremo a extremo que validan la solidez de cada componente del sistema:
 
 ```bash
 # Ejecutar la suite completa de pruebas:
-./.venv/bin/pytest -v
+.venv/bin/pytest tests/ -v
 ```
 
-### Cobertura de Pruebas:
-- `tests/test_transformations.py`: Aplanamiento de GeoJSON, conversión a UTC ISO-8601, sanitización y casteo defensivo.
-- `tests/test_dags_integrity.py`: Validación de sintaxis e integridad estructural de los 4 DAGs de Airflow.
-- `tests/test_quality_quarantine.py`: Contrato de esquema Pandera, desvío automático de registros corruptos (latitud `150.0`) a cuarentena sin frenar el flujo.
-- `tests/test_api_auth.py`: Emisión y validación de tokens JWT, rechazo `401` anónimo, bloqueo `403` a viewers en cuarentena, y protección AST contra inyecciones SQL.
-- `tests/test_ai_validator.py`: Validación numérica por Regex, detección y rechazo de alucinaciones de magnitud y falsas alertas de tsunami.
-- `tests/test_idempotency.py`: Comprobación de que re-ejecuciones múltiples no duplican registros en PostgreSQL (`ON CONFLICT DO UPDATE`).
+### Cobertura de la Suite:
+- `tests/test_transformations.py`: Aplanamiento de GeoJSON, conversion a UTC ISO-8601, sanitizacion y casteo defensivo.
+- `tests/test_dags_integrity.py`: Validacion sintactica e integridad estructural de los 4 DAGs de Airflow.
+- `tests/test_quality_quarantine.py`: Contrato de esquema Pandera, desvio automatico de registros corruptos a cuarentena con persistencia del payload crudo y regla violada.
+- `tests/test_api_auth.py`: Ciclo de vida JWT, rechazo 401 a anonimos, bloqueo estricto 403 a usuarios viewer en cuarentena, y proteccion AST contra inyecciones SQL.
+- `tests/test_ai_validator.py`: Validacion numerica deterministica por expresiones regulares, deteccion y rechazo de alucinaciones en magnitudes, fechas o conteos.
+- `tests/test_idempotency.py`: Verificacion de que re-ejecuciones no duplican registros en PostgreSQL (`ON CONFLICT (id) DO UPDATE`).
+- `tests/test_lineage_and_swarms.py`: Calculo de distancias geodesicas Haversine, deteccion de enjambres sismicos por radio y conciliacion matematica de volumenes.
 
 ---
 
-## 🛡️ Auditoría de Seguridad
+## Auditoria de Seguridad y Calidad de Codigo
 
-Para auditar el repositorio contra vulnerabilidades, fugas de secretos y análisis estático de código:
+Para auditar el codigo contra vulnerabilidades, fugas de credenciales y analisis estatico:
 
 ```bash
 bash scripts/run_security_scan.sh
 ```
 
-Los reportes generados se encuentran en:
-- `docs/security/bandit_report.txt`: Análisis Estático de Seguridad de Código (SAST) con Bandit.
-- `docs/security/pip_audit_report.txt`: Análisis de dependencias y vulnerabilidades conocidas (CVEs) con pip-audit.
-- `docs/security/gitleaks_report.txt`: Detección de secretos y credenciales con Gitleaks.
+Los reportes se generan en el directorio `docs/security/`:
+- `bandit_report.txt`: Analisis Estatico de Seguridad de Codigo (SAST) con Bandit.
+- `pip_audit_report.txt`: Escaneo de dependencias contra bases de datos de vulnerabilidades conocidas (CVEs).
+- `gitleaks_report.txt`: Deteccion y prevencion de fuga de secretos y claves criptograficas.
 
 ---
 
-## 💡 Bono: Asistente IA Text-to-SQL con Salvaguarda AST
+## Motor de Inteligencia Artificial SismoBot
 
-La API incorpora el endpoint `POST /api/ai/query` que permite a los analistas formular preguntas en lenguaje natural (ej. *"¿Cuáles fueron los 5 sismos más fuertes de magnitud mayor a 5?"*).
+La plataforma cuenta con un agente analitico integrado que permite formular consultas en lenguaje natural o sentencias SQL directas sobre la capa Gold certificada.
 
-### Salvaguarda de Seguridad por AST (Abstract Syntax Tree):
-1. La consulta SQL generada se descompone en un árbol sintáctico mediante `sqlparse`.
-2. Se valida que la sentencia sea unívocamente de tipo `SELECT`.
-3. Se rechazan intentos de inyección o comandos destructivos (`DROP`, `TRUNCATE`, `ALTER`, `INSERT`, `UPDATE`, `DELETE`).
-4. La ejecución se realiza bajo el rol de base de datos `sismo_reader` (solo lectura a nivel de motor PostgreSQL).
-
----
-
-## 📸 Guía para Capturas de Pantalla (Evidencia de Entrega en Moodle)
-
-Para adjuntar las capturas requeridas en la entrega de Moodle:
-1. **Dashboard Principal (`http://localhost:3000`)**: Captura la vista con los 5 KPIs, mapa interactivo Leaflet con círculos de colores y gráficas de Recharts.
-2. **Panel de Cuarentena (Rol Admin)**: Ingresa con usuario `admin`, haz clic en la pestaña "Calidad y Cuarentena" y captura la tabla con el evento rechazado (`demo_quarantine_corrupt_lat`) y su regla violada (`GEOGRAPHIC_BOUNDS`).
-3. **Reporte Ejecutivo de IA y Exportación Imprimible**: En la pestaña "Reportes", captura el boletín narrativo estructurado con el badge `Validación Anti-Alucinación Aprobada` y el botón de exportación oficial PDF/HTML.
-4. **Airflow Webserver (`http://localhost:8080`)**: Ingresa con usuario `airflow` y captura la vista de DAGs con los 4 flujos en verde (`dag_ingesta_usgs`, `dag_transformacion_calidad`, `dag_backfill_historico`, `dag_reporte_ia_anomalias`).
-5. **Panel de Linaje & Auditoría (`http://localhost:3000`)**: Haz clic en el botón superior "Linaje & Auditoría" para mostrar el grafo reactivo de 11 nodos y la verificación formal de la Ecuación de Conciliación Matemática ($N_{\text{raw}} = N_{\text{curated}} + N_{\text{quarantine}} + N_{\text{duplicates}}$), así como la capa de Enjambres Sísmicos geodésicos en el mapa.
+### Caracteristicas Principales:
+1. **Cascada Multi-Proveedor Resiliente**:
+   - Primario: Groq (`openai/gpt-oss-120b`) para traduccion y generacion con latencia inferior a un segundo.
+   - Respaldo: Google Gemini 3.8 Flash si el proveedor primario no esta disponible.
+   - Falla segura: Motor de reglas y expresiones regulares que garantiza respuesta deterministica sin caida de servicio.
+2. **Salvaguarda AST (Abstract Syntax Tree)**:
+   - Toda consulta SQL generada se analiza sintacticamente con `sqlparse`.
+   - Se valida unicamente sentencias de lectura `SELECT`.
+   - Se rechaza categoricamente cualquier token `DROP`, `DELETE`, `UPDATE`, `INSERT`, `ALTER` o `TRUNCATE`.
+3. **Validacion Anti-Alucinacion**:
+   - El archivo `validator.py` contrasta las cifras extraidas del texto generado por el LLM contra las metricas deterministicas calculadas en base de datos.
+   - En caso de discrepancia, el sistema descarta la respuesta del LLM y emplea plantillas seguras predefinidas.
 
 ---
 
-## ⚠️ Limitaciones Conocidas y Mejoras Futuras
+## Diseno Visual e Interfaz de Usuario
 
-1. **Ingesta Batch vs Streaming Puro**: Actualmente la ingesta corre cada 5 minutos mediante Airflow. En un entorno enterprise de ultra-alta concurrencia, se implementaría Apache Kafka con Kafka Connect para consumir el WebSocket directo de USGS y procesar eventos con Apache Flink en subsegundos.
-2. **Lakehouse Distribuido**: Para procesar volúmenes masivos de datos históricos a nivel de terabytes/petabytes, las capas Bronze y Silver migrarían de PostgreSQL a almacenamiento de objetos S3/GCS en formato Apache Parquet sobre Apache Iceberg o Delta Lake.
-3. **Estándares OpenLineage Enterprise**: La plataforma ya incluye linaje end-to-end integrado nativamente en `/api/pipeline/lineage` y visualizado en React; como evolución futura se puede emitir eventos bajo el estándar OpenLineage hacia Marquez u OpenMetadata.
+La interfaz fue construida desde cero bajo un enfoque minimalista y de alto rendimiento tecnico, eliminando ruido visual y elementos genericos:
+
+- **Paleta Cromatica Sobria**:
+  - Mocha Brown (`#120e0d`, `#171211`, `#1e1715`): Fondo calido profundo y tarjetas de contraste suave.
+  - Platinum Silver (`#f7f7f9`, `#ececf1`, `#9b9baa`): Tipografia legible de alta fidelidad.
+  - Pale Lavender (`#d5c4fb`, `#844dea`, `#9f73f2`): Acentos operativos y destacados analiticos.
+- **Cartografia Satelital Tactica**:
+  - Integracion de mosaicos satelitales globales de alta definicion (Esri World Imagery) y modos de alto contraste (CartoDB Dark).
+  - Clustering geodesico por severidad energetica: verde (< 3.0), amarillo (3.0 a 4.5), naranja (4.5 a 6.0) y carmesi (>= 6.0).
+  - Identificacion visual de enjambres sismicos anomalos.
+- **Transiciones Fluidas**:
+  - Curvas de aceleracion suaves (`cubic-bezier(0.16, 1, 0.3, 1)`).
+  - Drawer lateral para consultas conversacionales de IA sin superposiciones ni colapso de componentes.
 
 ---
 
-## 📚 Documentación de Sustentación
+## Guia de Evidencias de Entrega
 
-- [docs/ARQUITECTURA.md](docs/ARQUITECTURA.md): Especificación técnica exhaustiva, diagramas Mermaid, esquema de roles PostgreSQL y diseño de resiliencia.
-- [docs/DEFENSA.md](docs/DEFENSA.md): **Guía con 18 preguntas y respuestas técnicas** para la defensa de la prueba ante comités evaluadores.
-- [docs/REQUISITOS_PDD.md](docs/REQUISITOS_PDD.md): Requisitos de negocio originales y matriz de criterios de aceptación.
-- [docs/security/](docs/security/): Informes de auditoría de seguridad automatizada (Bandit SAST, Pip-audit CVEs y Gitleaks Secret Detection).
-- [CHANGELOG.md](CHANGELOG.md): Registro cronológico y trazabilidad de todas las fases implementadas.
+Para la evaluacion del proyecto en plataforma:
+1. **Dashboard Operativo**: Vista principal con KPIs consolidados, mapa satelital Leaflet y feed en vivo transmitido por Server-Sent Events.
+2. **Consola de Cuarentena (Admin)**: Vista exclusiva para rol administrador mostrando eventos rechazados por limites geograficos con visor de payload JSON original.
+3. **Boletin Ejecutivo y Exportacion**: Informe sintetico con sello de aprobacion anti-alucinacion y exportacion a formato imprimible / PDF.
+4. **Airflow Webserver (`http://localhost:8080`)**: Monitor de ejecucion de DAGs (`dag_ingesta_usgs`, `dag_transformacion_calidad`, `dag_backfill_historico`, `dag_reporte_ia_anomalias`).
+5. **Grafo de Linaje y Conciliacion**: Pestaña de gobernanza con representacion de los 8 nodos de la arquitectura Medallion y validacion formal de la ecuacion de conciliacion.
+
+---
+
+## Documentacion Tecnica de Referencia
+
+- [docs/ARQUITECTURA.md](docs/ARQUITECTURA.md): Especificacion de ingenieria, diagramas de secuencia, esquema de bases de datos y acuerdos de nivel de servicio.
+- [docs/DEFENSA.md](docs/DEFENSA.md): Banco de 18 preguntas tecnicas fundamentales para la sustentacion ante comité evaluador.
+- [docs/REQUISITOS_PDD.md](docs/REQUISITOS_PDD.md): Matriz de requerimientos obligatorios y criterios de aceptacion.
+- [docs/security/](docs/security/): Informes detallados de auditoria de seguridad automatica.
+- [CHANGELOG.md](CHANGELOG.md): Registro cronologico de cambios y evoluciones del proyecto.

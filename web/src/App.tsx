@@ -148,7 +148,7 @@ const MainApp: React.FC = () => {
 
   // 2. Usuario Autenticado (Viewer o Admin): Consola Operativa Completa
   return (
-    <div className="min-h-screen bg-[#070b14] text-slate-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-[#120e0d] text-[#ececf1] flex flex-col font-sans selection:bg-[#844dea]/30 selection:text-[#d5c4fb]">
       {/* Top Navbar */}
       <Navbar
         activeTab={activeTab}

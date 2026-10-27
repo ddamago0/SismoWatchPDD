@@ -326,3 +326,4 @@ class SismoAiAgent:
 
 # Instancia singleton del agente
 sismo_agent = SismoAiAgent()
+

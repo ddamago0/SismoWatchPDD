@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { EarthquakeEvent, SeismicAnomaly } from '../types';
-import { Layers, Zap, Eye, Compass, RefreshCw } from 'lucide-react';
+import { Layers, Eye } from 'lucide-react';
 
 interface TacticalMapProps {
   events: EarthquakeEvent[];
@@ -15,7 +15,7 @@ type MapLayerType = 'satellite' | 'dark' | 'streets';
 
 const MAP_TILES = {
   satellite: {
-    name: 'Satélite (God\'s Eye)',
+    name: 'Satélite',
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
     maxZoom: 18,
     attribution: 'Tiles &copy; Esri &mdash; NASA / USGS / Maxar',
@@ -35,15 +35,15 @@ const MAP_TILES = {
 };
 
 function getMagnitudeColor(mag: number): string {
-  if (mag < 3.0) return '#10b981'; // Verde Neón
-  if (mag < 4.5) return '#f59e0b'; // Ámbar
-  if (mag < 6.0) return '#f97316'; // Naranja
-  return '#ef4444'; // Rojo Carmesí
+  if (mag < 3.0) return '#86efac'; // Menta suave
+  if (mag < 4.5) return '#fcd34d'; // Ámbar champaña
+  if (mag < 6.0) return '#fb923c'; // Terracota
+  return '#f87171'; // Carmesí sobrio
 }
 
 function getMagnitudeRadius(mag: number): number {
   if (mag <= 0) return 4;
-  return Math.max(5, Math.min(22, mag * 3.2));
+  return Math.max(5, Math.min(20, mag * 3.0));
 }
 
 export const TacticalMap: React.FC<TacticalMapProps> = ({
@@ -75,7 +75,6 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
       attributionControl: false,
     });
 
-    // Initial Tile Layer: Esri World Imagery (Satellite)
     const initialTile = L.tileLayer(MAP_TILES.satellite.url, {
       maxZoom: MAP_TILES.satellite.maxZoom,
       attribution: MAP_TILES.satellite.attribution,
@@ -86,7 +85,6 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
     swarmsLayerRef.current = L.layerGroup().addTo(map);
     mapInstanceRef.current = map;
 
-    // Force map layout computation to prevent grey / cut-off tiles
     const resizeTimer = setTimeout(() => {
       map.invalidateSize();
     }, 200);
@@ -98,7 +96,7 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
     };
   }, []);
 
-  // Handle Layer Switching (Satellite vs Dark vs Streets)
+  // Handle Layer Switching
   useEffect(() => {
     if (!mapInstanceRef.current) return;
     const map = mapInstanceRef.current;
@@ -132,24 +130,24 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
 
       const circle = L.circle([swarm.latitude!, swarm.longitude!], {
         radius: radiusMeters,
-        color: '#a855f7',
-        fillColor: '#c084fc',
-        fillOpacity: 0.22,
-        weight: 2,
-        dashArray: '6, 6',
+        color: '#c4b5fd',
+        fillColor: '#d5c4fb',
+        fillOpacity: 0.18,
+        weight: 1.5,
+        dashArray: '5, 5',
       });
 
       const popupHtml = `
-        <div style="font-family: ui-sans-serif, system-ui, sans-serif; color: #f8fafc; padding: 4px; min-width: 200px;">
-          <div style="display: flex; align-items: center; gap: 6px; font-weight: 800; font-size: 11px; text-transform: uppercase; color: #c084fc; border-bottom: 1px solid rgba(168,85,247,0.3); padding-bottom: 4px; margin-bottom: 6px;">
-            <span>⚡ Enjambre Sísmico (Swarm)</span>
+        <div style="font-family: inherit; color: #ececf1; padding: 4px; min-width: 190px;">
+          <div style="display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 10px; text-transform: uppercase; color: #d5c4fb; border-bottom: 1px solid rgba(213,196,251,0.2); padding-bottom: 3px; margin-bottom: 5px;">
+            <span>Enjambre Sísmico</span>
           </div>
-          <div style="font-weight: 700; font-size: 13px; color: #ffffff; margin-bottom: 4px;">${swarm.region || 'Zona de Enjambre'}</div>
-          <div style="font-size: 11px; color: #cbd5e1; margin-bottom: 8px; line-height: 1.4;">${swarm.explanation || 'Concentración espacio-temporal detectada.'}</div>
-          <div style="background: rgba(88,28,135,0.4); border: 1px solid rgba(168,85,247,0.3); border-radius: 8px; padding: 6px; font-family: ui-monospace, monospace; font-size: 11px; color: #e9d5ff;">
-            <div>Eventos en racimo: <strong style="color: #ffffff;">${swarm.cluster_size || '—'}</strong></div>
-            <div>Radio geodésico: <strong style="color: #ffffff;">${swarm.radius_km?.toFixed(1) || '—'} km</strong></div>
-            <div>Magnitud pico: <strong style="color: #f43f5e;">${swarm.max_magnitude?.toFixed(1) || '—'} Mw</strong></div>
+          <div style="font-weight: 600; font-size: 12px; color: #ffffff; margin-bottom: 3px;">${swarm.region || 'Zona de Enjambre'}</div>
+          <div style="font-size: 11px; color: #9b9baa; margin-bottom: 6px; line-height: 1.3;">${swarm.explanation || 'Concentración espacio-temporal detectada.'}</div>
+          <div style="background: rgba(40,30,55,0.6); border: 1px solid rgba(213,196,251,0.2); border-radius: 6px; padding: 5px; font-family: monospace; font-size: 10px; color: #ececf1;">
+            <div>Eventos: <strong>${swarm.cluster_size || '—'}</strong></div>
+            <div>Radio: <strong>${swarm.radius_km?.toFixed(1) || '—'} km</strong></div>
+            <div>Pico: <strong style="color: #fca5a5;">${swarm.max_magnitude?.toFixed(1) || '—'} Mw</strong></div>
           </div>
         </div>
       `;
@@ -174,28 +172,28 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
       const marker = L.circleMarker([evt.latitude, evt.longitude], {
         radius,
         fillColor: color,
-        fillOpacity: 0.88,
-        color: isCritical ? '#ffffff' : '#0a0e17',
-        weight: isCritical ? 2.5 : 1.5,
+        fillOpacity: 0.85,
+        color: isCritical ? '#ffffff' : '#120e0d',
+        weight: isCritical ? 2.0 : 1.2,
       });
 
       const popupHtml = `
-        <div style="font-family: ui-sans-serif, system-ui, sans-serif; color: #f8fafc; padding: 4px; min-width: 220px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 6px; margin-bottom: 6px;">
-            <span style="background: ${color}; color: #ffffff; font-weight: 800; font-size: 11px; padding: 2px 7px; border-radius: 6px; font-family: ui-monospace, monospace;">
+        <div style="font-family: inherit; color: #ececf1; padding: 4px; min-width: 210px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 5px; margin-bottom: 5px;">
+            <span style="background: ${color}; color: #120e0d; font-weight: 700; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-family: monospace;">
               ${evt.mag.toFixed(1)} Mw
             </span>
-            <span style="font-size: 10px; color: #94a3b8; font-family: ui-monospace, monospace;">
+            <span style="font-size: 10px; color: #9b9baa; font-family: monospace;">
               ${new Date(evt.time).toLocaleTimeString()} UTC
             </span>
           </div>
-          <div style="font-weight: 700; font-size: 12px; color: #ffffff; margin-bottom: 6px; line-height: 1.3;">
+          <div style="font-weight: 600; font-size: 11px; color: #ffffff; margin-bottom: 5px; line-height: 1.3;">
             ${evt.place || 'Epicentro no especificado'}
           </div>
-          <div style="font-family: ui-monospace, monospace; font-size: 10px; color: #94a3b8; line-height: 1.6; background: rgba(15,23,42,0.6); padding: 6px; border-radius: 6px;">
-            <div>Profundidad: <strong style="color: #f1f5f9;">${evt.depth_km != null ? evt.depth_km.toFixed(1) : '—'} km</strong></div>
-            <div>Coordenadas: <strong style="color: #f1f5f9;">${evt.latitude.toFixed(2)}, ${evt.longitude.toFixed(2)}</strong></div>
-            ${evt.tsunami === 1 ? '<div style="color: #f43f5e; font-weight: 800; margin-top: 3px;">⚠️ ALERTA TSUNAMI ACTIVA</div>' : ''}
+          <div style="font-family: monospace; font-size: 10px; color: #9b9baa; line-height: 1.5; background: rgba(22,17,16,0.6); padding: 5px; border-radius: 6px;">
+            <div>Profundidad: <strong style="color: #f7f7f9;">${evt.depth_km != null ? evt.depth_km.toFixed(1) : '—'} km</strong></div>
+            <div>Coordenadas: <strong style="color: #f7f7f9;">${evt.latitude.toFixed(2)}, ${evt.longitude.toFixed(2)}</strong></div>
+            ${evt.tsunami === 1 ? '<div style="color: #f87171; font-weight: 700; margin-top: 2px;">⚠️ ALERTA TSUNAMI ACTIVA</div>' : ''}
           </div>
         </div>
       `;
@@ -221,81 +219,81 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
   }, [selectedEvent]);
 
   return (
-    <div className="relative w-full h-[540px] rounded-2xl overflow-hidden border border-slate-800 bg-[#060911] shadow-2xl flex flex-col">
+    <div className="relative w-full h-[540px] rounded-xl overflow-hidden border border-[#241c19] bg-[#120e0d] shadow-sm flex flex-col">
       {/* Top Map Tactical HUD Toolbar */}
-      <div className="absolute top-3 left-3 z-[20] flex items-center gap-2 bg-[#0a0f1d]/90 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-700 shadow-xl font-mono text-[11px]">
-        <div className="flex items-center gap-2 text-slate-200">
-          <Eye className="w-3.5 h-3.5 text-blue-400" />
-          <span className="font-bold tracking-wide">Cartografía ({events.length})</span>
+      <div className="absolute top-3 left-3 z-[20] flex items-center gap-2 bg-[#171211]/90 backdrop-blur-md px-2.5 py-1.5 rounded-lg border border-[#2c221f] shadow-sm font-mono text-[11px]">
+        <div className="flex items-center gap-1.5 text-[#f7f7f9]">
+          <Eye className="w-3.5 h-3.5 text-[#d5c4fb]" />
+          <span className="font-medium">Cartografía ({events.length})</span>
         </div>
 
-        <div className="h-3 w-px bg-slate-700 mx-1" />
+        <div className="h-3 w-px bg-[#2c221f] mx-0.5" />
 
-        {/* Toggle Layer (Satellite vs Tactical vs Streets) */}
-        <div className="flex items-center gap-1 bg-slate-900/90 p-0.5 rounded-lg border border-slate-800">
+        {/* Toggle Layer */}
+        <div className="flex items-center gap-0.5 bg-[#120e0d] p-0.5 rounded-md border border-[#201917]">
           <button
             onClick={() => setCurrentLayer('satellite')}
-            className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
+            className={`px-2 py-0.5 rounded text-[10px] font-medium transition-all ${
               currentLayer === 'satellite'
-                ? 'bg-blue-600 text-white shadow'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-[#844dea] text-white shadow-xs'
+                : 'text-[#9b9baa] hover:text-[#f7f7f9]'
             }`}
           >
             Satélite
           </button>
           <button
             onClick={() => setCurrentLayer('dark')}
-            className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
+            className={`px-2 py-0.5 rounded text-[10px] font-medium transition-all ${
               currentLayer === 'dark'
-                ? 'bg-blue-600 text-white shadow'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-[#844dea] text-white shadow-xs'
+                : 'text-[#9b9baa] hover:text-[#f7f7f9]'
             }`}
           >
             Oscuro
           </button>
           <button
             onClick={() => setCurrentLayer('streets')}
-            className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
+            className={`px-2 py-0.5 rounded text-[10px] font-medium transition-all ${
               currentLayer === 'streets'
-                ? 'bg-blue-600 text-white shadow'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-[#844dea] text-white shadow-xs'
+                : 'text-[#9b9baa] hover:text-[#f7f7f9]'
             }`}
           >
             Calles
           </button>
         </div>
 
-        <div className="h-3 w-px bg-slate-700 mx-1" />
+        <div className="h-3 w-px bg-[#2c221f] mx-0.5" />
 
         {/* Toggle Swarms */}
-        <label className="flex items-center gap-1.5 text-purple-300 cursor-pointer hover:text-white transition-colors">
+        <label className="flex items-center gap-1.5 text-[#d5c4fb] cursor-pointer hover:text-white transition-colors">
           <input
             type="checkbox"
             checked={showSwarms}
             onChange={(e) => setShowSwarms(e.target.checked)}
-            className="w-3.5 h-3.5 accent-purple-500 rounded cursor-pointer"
+            className="w-3 h-3 accent-[#844dea] rounded cursor-pointer"
           />
           <span className="text-[10px]">Enjambres</span>
         </label>
       </div>
 
       {/* Magnitude Legend Indicator */}
-      <div className="absolute bottom-3 right-3 z-[20] hidden sm:flex items-center gap-3 bg-[#0a0f1d]/90 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-700 text-[10px] font-mono text-slate-300">
-        <span className="text-slate-400 uppercase font-bold">Escala Mw:</span>
+      <div className="absolute bottom-3 right-3 z-[20] hidden sm:flex items-center gap-2.5 bg-[#171211]/90 backdrop-blur-md px-2.5 py-1 rounded-lg border border-[#2c221f] text-[10px] font-mono text-[#9b9baa]">
+        <span className="uppercase text-[9px] font-medium">Escala:</span>
         <div className="flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full bg-emerald-500" />
+          <span className="w-2 h-2 rounded-full bg-[#86efac]" />
           <span>&lt; 3.0</span>
         </div>
         <div className="flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full bg-amber-500" />
+          <span className="w-2 h-2 rounded-full bg-[#fcd34d]" />
           <span>3.0 - 4.5</span>
         </div>
         <div className="flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full bg-orange-500" />
+          <span className="w-2 h-2 rounded-full bg-[#fb923c]" />
           <span>4.5 - 6.0</span>
         </div>
         <div className="flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+          <span className="w-2 h-2 rounded-full bg-[#f87171]" />
           <span>&ge; 6.0</span>
         </div>
       </div>

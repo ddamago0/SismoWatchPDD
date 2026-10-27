@@ -2,17 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import {
   Database,
-  Layers,
-  ShieldCheck,
-  AlertOctagon,
-  ArrowRight,
   RefreshCw,
-  Cpu,
-  CheckCircle2,
-  FileText,
-  Activity,
   Workflow,
-  Sparkles,
 } from 'lucide-react';
 
 interface LineageNode {
@@ -118,7 +109,6 @@ export const LineagePanel: React.FC = () => {
       setData(res);
       setIsUsingFallback(false);
     } catch {
-      // Elegant fallback to architectural model without throwing or breaking
       setIsUsingFallback(true);
     } finally {
       setLoading(false);
@@ -142,24 +132,24 @@ export const LineagePanel: React.FC = () => {
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
       {/* Top Banner & Reconciliation Formula */}
-      <div className="glass-surface p-6 rounded-2xl border border-white/10 relative overflow-hidden">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-5 mb-5">
+      <div className="p-6 bg-[#171211] rounded-2xl border border-[#261f1c] relative overflow-hidden">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#261f1c] pb-5 mb-5">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-cobalt-500/10 text-cobalt-400 rounded-xl border border-cobalt-500/20">
+            <div className="p-2.5 bg-[#241a2e] text-[#d5c4fb] rounded-xl border border-[#4a365f]/40">
               <Workflow className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-base font-bold text-white tracking-tight">
+                <h2 className="text-base font-semibold text-[#f7f7f9] tracking-tight">
                   Gobernanza y Linaje de Datos Medallion
                 </h2>
                 {isUsingFallback && (
-                  <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                  <span className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-[#292214] text-[#fde047] border border-[#4a3b1d]/60">
                     MODO ARQUITECTÓNICO RESILIENTE
                   </span>
                 )}
               </div>
-              <p className="text-xs text-slate-400 font-mono">
+              <p className="text-xs text-[#9b9baa] font-mono">
                 Trazabilidad determinista desde la API de USGS hasta el consumo analítico en Gold
               </p>
             </div>
@@ -168,53 +158,53 @@ export const LineagePanel: React.FC = () => {
           <button
             onClick={fetchLineage}
             disabled={loading}
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-dark-850 hover:bg-dark-800 text-xs font-mono font-semibold text-slate-200 border border-white/10 transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#1f1715] hover:bg-[#281e1b] text-xs font-mono font-medium text-[#ececf1] border border-[#2b211e] transition-colors disabled:opacity-50"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-cobalt-400' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[#d5c4fb]' : ''}`} />
             <span>{loading ? 'Sincronizando...' : 'Refrescar Grafo'}</span>
           </button>
         </div>
 
         {/* Ecuación de Conciliación Matemática */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="p-3.5 bg-dark-950/70 rounded-xl border border-white/5">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500">
+          <div className="p-3.5 bg-[#120e0d] rounded-xl border border-[#241c19]">
+            <span className="text-[10px] font-mono font-medium uppercase tracking-wider text-[#9b9baa]">
               Ecuación de Conciliación
             </span>
-            <div className="text-xs font-mono font-bold text-rose-400 mt-1">
+            <div className="text-xs font-mono font-semibold text-[#f87171] mt-1">
               {reconciliation.equation || 'N_raw = N_curated + N_quarantine'}
             </div>
-            <div className="text-[10px] text-slate-500 mt-0.5">Tolerancia cero a pérdida de datos</div>
+            <div className="text-[10px] text-[#9b9baa] mt-0.5">Tolerancia cero a pérdida de datos</div>
           </div>
 
-          <div className="p-3.5 bg-dark-950/70 rounded-xl border border-white/5">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500">
+          <div className="p-3.5 bg-[#120e0d] rounded-xl border border-[#241c19]">
+            <span className="text-[10px] font-mono font-medium uppercase tracking-wider text-[#9b9baa]">
               Capa Gold (Certificados)
             </span>
-            <div className="text-xl font-mono font-black text-emerald-400 mt-1">
+            <div className="text-xl font-mono font-bold text-[#86efac] mt-1">
               {reconciliation.total_curated ?? 17} sismos
             </div>
-            <div className="text-[10px] text-slate-500 mt-0.5">Disponibles para consulta en la API</div>
+            <div className="text-[10px] text-[#9b9baa] mt-0.5">Disponibles para consulta en la API</div>
           </div>
 
-          <div className="p-3.5 bg-dark-950/70 rounded-xl border border-white/5">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500">
+          <div className="p-3.5 bg-[#120e0d] rounded-xl border border-[#241c19]">
+            <span className="text-[10px] font-mono font-medium uppercase tracking-wider text-[#9b9baa]">
               Aislados en Cuarentena
             </span>
-            <div className="text-xl font-mono font-black text-amber-400 mt-1">
+            <div className="text-xl font-mono font-bold text-[#fde047] mt-1">
               {reconciliation.total_quarantined ?? 2} registros
             </div>
-            <div className="text-[10px] text-slate-500 mt-0.5">Rechazados por Pandera Guard</div>
+            <div className="text-[10px] text-[#9b9baa] mt-0.5">Rechazados por Pandera Guard</div>
           </div>
 
-          <div className="p-3.5 bg-dark-950/70 rounded-xl border border-white/5">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500">
+          <div className="p-3.5 bg-[#120e0d] rounded-xl border border-[#241c19]">
+            <span className="text-[10px] font-mono font-medium uppercase tracking-wider text-[#9b9baa]">
               Índice de Calidad
             </span>
-            <div className="text-xl font-mono font-black text-cobalt-400 mt-1">
+            <div className="text-xl font-mono font-bold text-[#d5c4fb] mt-1">
               {reconciliation.quality_score_pct ?? 100}%
             </div>
-            <div className="text-[10px] text-slate-500 mt-0.5">Conformidad estricta de esquemas</div>
+            <div className="text-[10px] text-[#9b9baa] mt-0.5">Conformidad estricta de esquemas</div>
           </div>
         </div>
       </div>
@@ -222,51 +212,51 @@ export const LineagePanel: React.FC = () => {
       {/* Visual Pipeline Graph & Interactive Inspector */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Nodes Grid (8 cols) */}
-        <div className="lg:col-span-8 glass-surface p-5 rounded-2xl border border-white/10 space-y-4">
+        <div className="lg:col-span-8 bg-[#171211] p-5 rounded-2xl border border-[#261f1c] space-y-4">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-xs font-mono font-bold text-slate-300 uppercase tracking-wider">
+            <h3 className="text-xs font-mono font-semibold text-[#f7f7f9] uppercase tracking-wider">
               Flujo Dirigido de Transformación y Enrutamiento (DAG Medallion)
             </h3>
-            <span className="text-[10px] font-mono text-slate-500">Haz clic en un nodo para auditar</span>
+            <span className="text-[10px] font-mono text-[#9b9baa]">Haz clic en un nodo para auditar</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {nodes.map((node) => {
               const isSelected = selectedNode?.id === node.id;
-              let badgeColor = 'bg-blue-500/10 text-blue-400 border-blue-500/20';
-              if (node.layer === 'bronze') badgeColor = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
-              if (node.layer === 'silver') badgeColor = 'bg-slate-500/10 text-slate-300 border-slate-500/20';
-              if (node.layer === 'quality') badgeColor = 'bg-purple-500/10 text-purple-400 border-purple-500/20';
-              if (node.layer === 'gold') badgeColor = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
-              if (node.layer === 'analytics') badgeColor = 'bg-rose-500/10 text-rose-400 border-rose-500/20';
+              let badgeColor = 'bg-[#241a2e] text-[#d5c4fb] border-[#4a365f]/50';
+              if (node.layer === 'bronze') badgeColor = 'bg-[#292214] text-[#fde047] border-[#4a3b1d]/60';
+              if (node.layer === 'silver') badgeColor = 'bg-[#201a18] text-[#ececf1] border-[#332b27]';
+              if (node.layer === 'quality') badgeColor = 'bg-[#241a2e] text-[#d5c4fb] border-[#4a365f]/50';
+              if (node.layer === 'gold') badgeColor = 'bg-[#14231b] text-[#86efac] border-[#234231]/60';
+              if (node.layer === 'analytics') badgeColor = 'bg-[#2b1418] text-[#f87171] border-[#4f2026]/70';
 
               return (
                 <div
                   key={node.id}
                   onClick={() => setSelectedNode(node)}
-                  className={`p-3.5 rounded-xl border cursor-pointer transition-all ${
+                  className={`p-3.5 rounded-xl border cursor-pointer transition-all duration-150 ${
                     isSelected
-                      ? 'bg-cobalt-500/15 border-cobalt-500/50 shadow-glow-cobalt'
-                      : 'bg-dark-950/60 hover:bg-dark-950 border-white/5 hover:border-white/10'
+                      ? 'bg-[#241a2e] border-[#844dea]'
+                      : 'bg-[#120e0d] hover:bg-[#1a1413] border-[#241c19] hover:border-[#332b27]'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase border ${badgeColor}`}>
+                    <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-medium uppercase border ${badgeColor}`}>
                       {node.category}
                     </span>
-                    <span className="text-[10px] font-mono text-emerald-400 font-semibold flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="text-[10px] font-mono text-[#86efac] font-medium flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#86efac] animate-pulse" />
                       {node.status}
                     </span>
                   </div>
 
-                  <h4 className="text-xs font-mono font-bold text-white truncate mb-1">{node.name}</h4>
-                  <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">{node.description}</p>
+                  <h4 className="text-xs font-mono font-semibold text-[#f7f7f9] truncate mb-1">{node.name}</h4>
+                  <p className="text-[11px] text-[#9b9baa] line-clamp-2 leading-relaxed">{node.description}</p>
 
                   {node.records !== undefined && (
-                    <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-[10px] font-mono text-slate-400">
+                    <div className="mt-2.5 pt-2 border-t border-[#241c19] flex items-center justify-between text-[10px] font-mono text-[#9b9baa]">
                       <span>Registros:</span>
-                      <span className="font-bold text-slate-200">{node.records} filas</span>
+                      <span className="font-semibold text-[#ececf1]">{node.records} filas</span>
                     </div>
                   )}
                 </div>
@@ -276,9 +266,9 @@ export const LineagePanel: React.FC = () => {
         </div>
 
         {/* Selected Node Inspector (4 cols) */}
-        <div className="lg:col-span-4 glass-surface p-5 rounded-2xl border border-white/10 flex flex-col justify-between">
+        <div className="lg:col-span-4 bg-[#171211] p-5 rounded-2xl border border-[#261f1c] flex flex-col justify-between">
           <div>
-            <div className="flex items-center gap-2 text-xs font-mono font-bold text-cobalt-400 uppercase tracking-wider mb-4 pb-2 border-b border-white/10">
+            <div className="flex items-center gap-2 text-xs font-mono font-semibold text-[#d5c4fb] uppercase tracking-wider mb-4 pb-2 border-b border-[#261f1c]">
               <Database className="w-4 h-4" />
               <span>Inspector de Capa y Políticas</span>
             </div>
@@ -286,42 +276,42 @@ export const LineagePanel: React.FC = () => {
             {selectedNode ? (
               <div className="space-y-4">
                 <div>
-                  <span className="text-[10px] font-mono text-slate-500 uppercase">Nodo Seleccionado</span>
-                  <h4 className="text-sm font-mono font-bold text-white mt-0.5">{selectedNode.name}</h4>
-                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">{selectedNode.description}</p>
+                  <span className="text-[10px] font-mono text-[#9b9baa] uppercase">Nodo Seleccionado</span>
+                  <h4 className="text-sm font-mono font-semibold text-[#f7f7f9] mt-0.5">{selectedNode.name}</h4>
+                  <p className="text-xs text-[#9b9baa] mt-1 leading-relaxed">{selectedNode.description}</p>
                 </div>
 
-                <div className="p-3 bg-dark-950 rounded-xl border border-white/5 space-y-2 text-xs font-mono">
+                <div className="p-3 bg-[#120e0d] rounded-xl border border-[#241c19] space-y-2 text-xs font-mono">
                   <div className="flex justify-between">
-                    <span className="text-slate-500">Capa:</span>
-                    <span className="text-slate-200 uppercase font-bold">{selectedNode.layer}</span>
+                    <span className="text-[#9b9baa]">Capa:</span>
+                    <span className="text-[#ececf1] uppercase font-semibold">{selectedNode.layer}</span>
                   </div>
                   {selectedNode.protocol && (
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Protocolo:</span>
-                      <span className="text-slate-300">{selectedNode.protocol}</span>
+                      <span className="text-[#9b9baa]">Protocolo:</span>
+                      <span className="text-[#ececf1]">{selectedNode.protocol}</span>
                     </div>
                   )}
                   {selectedNode.policy && (
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Idempotencia:</span>
-                      <span className="text-emerald-400">{selectedNode.policy}</span>
+                      <span className="text-[#9b9baa]">Idempotencia:</span>
+                      <span className="text-[#86efac]">{selectedNode.policy}</span>
                     </div>
                   )}
                   {selectedNode.records !== undefined && (
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Volumen Auditado:</span>
-                      <span className="text-cobalt-400 font-bold">{selectedNode.records} registros</span>
+                      <span className="text-[#9b9baa]">Volumen Auditado:</span>
+                      <span className="text-[#d5c4fb] font-semibold">{selectedNode.records} registros</span>
                     </div>
                   )}
                   <div className="flex justify-between">
-                    <span className="text-slate-500">Estado de Salud:</span>
-                    <span className="text-emerald-400 font-bold">{selectedNode.status}</span>
+                    <span className="text-[#9b9baa]">Estado de Salud:</span>
+                    <span className="text-[#86efac] font-medium">{selectedNode.status}</span>
                   </div>
                 </div>
 
-                <div className="p-3 bg-dark-850/60 rounded-xl border border-white/5 text-[11px] text-slate-400 space-y-1">
-                  <div className="font-bold text-slate-300 mb-1">Criterio de Aceptación:</div>
+                <div className="p-3 bg-[#120e0d] rounded-xl border border-[#241c19] text-[11px] text-[#9b9baa] space-y-1">
+                  <div className="font-semibold text-[#ececf1] mb-1">Criterio de Aceptación:</div>
                   <p>
                     {selectedNode.layer === 'quality'
                       ? 'Rechazo inmediato de latitudes fuera de [-90, 90] o profundidades anómalas sin frenar la ingesta global.'
@@ -332,13 +322,13 @@ export const LineagePanel: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <p className="text-xs text-slate-500 font-mono">Selecciona un nodo del grafo para ver su detalle.</p>
+              <p className="text-xs text-[#9b9baa] font-mono">Selecciona un nodo del grafo para ver su detalle.</p>
             )}
           </div>
 
-          <div className="pt-4 border-t border-white/10 text-[10px] font-mono text-slate-500 flex items-center justify-between">
+          <div className="pt-4 border-t border-[#261f1c] text-[10px] font-mono text-[#9b9baa] flex items-center justify-between">
             <span>Segregación RBAC Activa</span>
-            <span className="text-emerald-400 font-bold">MÍNIMO PRIVILEGIO</span>
+            <span className="text-[#86efac] font-semibold">MÍNIMO PRIVILEGIO</span>
           </div>
         </div>
       </div>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { KpiData } from '../types';
-import { Activity, Flame, BarChart2, Waves, CheckCircle2, TrendingUp } from 'lucide-react';
+import { Activity, Flame, BarChart2, Waves, CheckCircle2 } from 'lucide-react';
 
 interface KpiCardsProps {
   kpis: KpiData | null;
@@ -12,7 +12,7 @@ export const KpiCards: React.FC<KpiCardsProps> = ({ kpis, loading }) => {
     return (
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[...Array(5)].map((_, i) => (
-          <div key={i} className="h-20 bg-dark-900 rounded-2xl border border-white/5 animate-pulse p-4" />
+          <div key={i} className="h-20 bg-[#171211] rounded-xl border border-[#241c19] animate-pulse p-4" />
         ))}
       </div>
     );
@@ -30,55 +30,55 @@ export const KpiCards: React.FC<KpiCardsProps> = ({ kpis, loading }) => {
       value: total24h,
       unit: 'eventos',
       icon: Activity,
-      color: 'text-cobalt-400',
-      bg: 'bg-cobalt-500/10',
-      border: 'border-cobalt-500/20',
-      description: 'Ingesta continua certificada',
-      delta: '+100% feed activo',
+      color: 'text-[#d5c4fb]',
+      bg: 'bg-[#241a2e]',
+      border: 'border-[#362744]',
+      description: 'Ingesta continua',
+      delta: 'Certificado',
     },
     {
       title: 'Magnitud Máxima',
       value: maxMag !== null && maxMag !== undefined ? maxMag.toFixed(1) : '—',
       unit: maxMag !== null ? 'Mw' : '',
       icon: Flame,
-      color: 'text-coral-400',
-      bg: 'bg-coral-500/10',
-      border: 'border-coral-500/20',
-      description: 'Pico de energía sísmica',
-      delta: 'Severidad calculada',
+      color: 'text-[#fca5a5]',
+      bg: 'bg-[#261418]',
+      border: 'border-[#421d25]',
+      description: 'Pico de energía',
+      delta: 'Máx Registrado',
     },
     {
       title: 'Magnitud Promedio',
       value: avgMag !== null && avgMag !== undefined ? avgMag.toFixed(2) : '—',
       unit: avgMag !== null ? 'Mw' : '',
       icon: BarChart2,
-      color: 'text-amber-400',
-      bg: 'bg-amber-500/10',
-      border: 'border-amber-500/20',
-      description: 'Media geométrica 24h',
-      delta: 'Línea base estable',
+      color: 'text-[#fcd34d]',
+      bg: 'bg-[#262016]',
+      border: 'border-[#44351a]',
+      description: 'Media geométrica',
+      delta: 'Línea Base',
     },
     {
-      title: 'Alertas de Tsunami',
+      title: 'Alertas Tsunami',
       value: tsunamis,
       unit: 'alertas',
       icon: Waves,
-      color: tsunamis > 0 ? 'text-coral-400 animate-pulse' : 'text-cyan-400',
-      bg: 'bg-cyan-500/10',
-      border: 'border-cyan-500/20',
-      description: 'Protocolos costeros activos',
-      delta: tsunamis > 0 ? 'Protocolo Alerta' : 'Sin riesgo costero',
+      color: tsunamis > 0 ? 'text-[#f87171] animate-pulse' : 'text-[#86efac]',
+      bg: tsunamis > 0 ? 'bg-[#291418]' : 'bg-[#14231b]',
+      border: tsunamis > 0 ? 'border-[#521b25]' : 'border-[#204030]',
+      description: 'Monitoreo costero',
+      delta: tsunamis > 0 ? 'Alerta' : 'Normal',
     },
     {
       title: 'Conformidad Pandera',
       value: `${quality}%`,
       unit: 'score',
       icon: CheckCircle2,
-      color: 'text-emerald-400',
-      bg: 'bg-emerald-500/10',
-      border: 'border-emerald-500/20',
-      description: 'Quality Gate Medallion',
-      delta: 'Zero Data Loss',
+      color: 'text-[#86efac]',
+      bg: 'bg-[#14231b]',
+      border: 'border-[#204030]',
+      description: 'Quality Gate',
+      delta: '100% Auditado',
     },
   ];
 
@@ -89,29 +89,29 @@ export const KpiCards: React.FC<KpiCardsProps> = ({ kpis, loading }) => {
         return (
           <div
             key={idx}
-            className={`p-4 bg-dark-900/90 backdrop-blur-md rounded-2xl border ${card.border} transition-all hover:border-white/20 shadow-md relative overflow-hidden`}
+            className="p-3.5 bg-[#171211] rounded-xl border border-[#241c19] hover:border-[#3d312c] transition-all duration-200 shadow-sm relative overflow-hidden"
           >
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[10px] font-mono font-medium text-[#9b9baa] uppercase tracking-wider">
                 {card.title}
               </span>
               <div className={`p-1.5 rounded-lg ${card.bg} ${card.color}`}>
-                <Icon className="w-4 h-4" />
+                <Icon className="w-3.5 h-3.5" />
               </div>
             </div>
 
             <div className="flex items-baseline gap-1.5">
-              <span className="text-2xl font-mono font-black text-white tracking-tight">
+              <span className="text-xl font-mono font-bold text-[#f7f7f9] tracking-tight">
                 {card.value}
               </span>
               {card.unit && (
-                <span className="text-xs font-mono text-slate-400 font-semibold">{card.unit}</span>
+                <span className="text-[11px] font-mono text-[#9b9baa]">{card.unit}</span>
               )}
             </div>
 
-            <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 mt-2 pt-2 border-t border-white/5">
+            <div className="flex items-center justify-between text-[10px] font-mono text-[#737384] mt-2 pt-1.5 border-t border-[#201917]">
               <span className="truncate">{card.description}</span>
-              <span className="text-emerald-400 font-bold hidden sm:inline">{card.delta}</span>
+              <span className="text-[#9b9baa] font-medium hidden sm:inline">{card.delta}</span>
             </div>
           </div>
         );

@@ -27,27 +27,24 @@ export const FiltersBar: React.FC<FiltersBarProps> = ({
   loading,
 }) => {
   const timeRanges = [
-    { id: '1h', label: '1 Hora' },
-    { id: '24h', label: '24 Horas' },
-    { id: '7d', label: '7 Días' },
-    { id: '30d', label: '30 Días' },
+    { id: '1h', label: '1h' },
+    { id: '24h', label: '24h' },
+    { id: '7d', label: '7d' },
+    { id: '30d', label: '30d' },
   ];
 
   return (
-    <div className="bg-dark-900/90 backdrop-blur-md border border-white/10 rounded-2xl p-3 flex flex-wrap items-center justify-between gap-3 shadow-lg">
+    <div className="bg-[#171211] border border-[#241c19] rounded-xl p-2.5 flex flex-wrap items-center justify-between gap-2.5 shadow-sm">
       {/* Time Range Pills */}
-      <div className="flex items-center gap-1.5">
-        <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider mr-1 hidden sm:inline">
-          Ventana:
-        </span>
+      <div className="flex items-center gap-1 bg-[#120e0d] p-0.5 rounded-lg border border-[#201917]">
         {timeRanges.map((r) => (
           <button
             key={r.id}
             onClick={() => onTimeRangeChange(r.id)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all ${
+            className={`px-2.5 py-1 rounded-md text-xs font-mono font-medium transition-all duration-150 ${
               timeRange === r.id
-                ? 'bg-cobalt-500 text-white shadow-glow-cobalt'
-                : 'bg-dark-950 text-slate-400 hover:text-white hover:bg-dark-850 border border-white/5'
+                ? 'bg-[#844dea] text-white shadow-sm'
+                : 'text-[#9b9baa] hover:text-[#f7f7f9] hover:bg-[#1a1413]'
             }`}
           >
             {r.label}
@@ -56,10 +53,10 @@ export const FiltersBar: React.FC<FiltersBarProps> = ({
       </div>
 
       {/* Magnitude Slider */}
-      <div className="flex items-center gap-2.5 px-3 py-1.5 bg-dark-950 rounded-xl border border-white/5">
-        <SlidersHorizontal className="w-3.5 h-3.5 text-cobalt-400" />
-        <span className="text-xs font-mono text-slate-300">
-          Mag ≥ <span className="font-bold text-amber-400">{minMagnitude.toFixed(1)}</span>
+      <div className="flex items-center gap-2 px-2.5 py-1 bg-[#120e0d] rounded-lg border border-[#201917]">
+        <SlidersHorizontal className="w-3 h-3 text-[#d5c4fb]" />
+        <span className="text-[11px] font-mono text-[#9b9baa]">
+          Mag ≥ <span className="font-semibold text-[#f7f7f9]">{minMagnitude.toFixed(1)}</span>
         </span>
         <input
           type="range"
@@ -68,42 +65,42 @@ export const FiltersBar: React.FC<FiltersBarProps> = ({
           step="0.5"
           value={minMagnitude}
           onChange={(e) => onMinMagnitudeChange(parseFloat(e.target.value))}
-          className="w-20 sm:w-28 accent-cobalt-500 cursor-pointer"
+          className="w-16 sm:w-24 accent-[#844dea] cursor-pointer"
         />
       </div>
 
       {/* Tsunami Toggle */}
-      <label className="flex items-center gap-1.5 px-3 py-1.5 bg-dark-950 rounded-xl border border-white/5 text-xs font-mono text-slate-300 cursor-pointer hover:border-white/10 transition-colors">
+      <label className="flex items-center gap-1.5 px-2.5 py-1 bg-[#120e0d] rounded-lg border border-[#201917] text-xs font-mono text-[#9b9baa] cursor-pointer hover:border-[#382f2c] transition-colors">
         <input
           type="checkbox"
           checked={onlyTsunami}
           onChange={(e) => onOnlyTsunamiChange(e.target.checked)}
-          className="w-3.5 h-3.5 accent-rose-500 rounded cursor-pointer"
+          className="w-3 h-3 accent-[#844dea] rounded cursor-pointer"
         />
-        <Waves className={`w-3.5 h-3.5 ${onlyTsunami ? 'text-rose-400' : 'text-slate-500'}`} />
-        <span>Solo Tsunami</span>
+        <Waves className={`w-3 h-3 ${onlyTsunami ? 'text-[#f87171]' : 'text-[#737384]'}`} />
+        <span className={onlyTsunami ? 'text-[#f7f7f9] font-medium' : ''}>Tsunami</span>
       </label>
 
       {/* Region Search Input & Refresh */}
-      <div className="flex items-center gap-2 flex-grow sm:flex-grow-0 sm:w-64">
+      <div className="flex items-center gap-1.5 flex-grow sm:flex-grow-0 sm:w-60">
         <div className="relative w-full">
-          <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5" />
+          <Search className="w-3 h-3 text-[#737384] absolute left-2.5 top-2.5" />
           <input
             type="text"
-            placeholder="Filtrar por región..."
+            placeholder="Región..."
             value={searchRegion}
             onChange={(e) => onSearchRegionChange(e.target.value)}
-            className="w-full bg-dark-950 border border-white/10 rounded-xl pl-8 pr-3 py-1.5 text-xs font-mono text-white placeholder-slate-500 focus:outline-none focus:border-cobalt-500"
+            className="w-full bg-[#120e0d] border border-[#201917] rounded-lg pl-7 pr-2.5 py-1 text-xs font-mono text-[#ececf1] placeholder-[#5c4d47] focus:outline-none focus:border-[#844dea]"
           />
         </div>
 
         <button
           onClick={onRefresh}
           disabled={loading}
-          title="Refrescar datos en tiempo real"
-          className="p-2 bg-dark-950 hover:bg-dark-850 text-slate-300 hover:text-white rounded-xl border border-white/10 transition-colors disabled:opacity-50 flex-shrink-0"
+          title="Refrescar datos"
+          className="p-1.5 bg-[#120e0d] hover:bg-[#1a1413] text-[#9b9baa] hover:text-[#f7f7f9] rounded-lg border border-[#201917] transition-colors disabled:opacity-50 shrink-0"
         >
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-cobalt-400' : ''}`} />
+          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[#d5c4fb]' : ''}`} />
         </button>
       </div>
     </div>

@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
-import { useAuth, PRESET_CREDENTIALS } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 import {
-  Shield,
-  User,
-  Lock,
   Activity,
   ArrowRight,
   AlertCircle,
   X,
+  User,
+  Lock,
   KeyRound,
 } from 'lucide-react';
 
@@ -57,73 +56,73 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
       {/* Backdrop */}
       <div
         onClick={onClose}
-        className="fixed inset-0 z-[9990] bg-black/80 backdrop-blur-md transition-opacity animate-in fade-in duration-200"
+        className="fixed inset-0 z-[9990] bg-[#0c0a09]/80 backdrop-blur-sm transition-opacity duration-200"
       />
 
       {/* Modal Dialog */}
       <div className="fixed inset-0 z-[9991] flex items-center justify-center p-4">
-        <div className="w-full max-w-md bg-[#0c1220] border border-slate-700/80 rounded-3xl p-6 sm:p-8 shadow-2xl relative animate-in zoom-in-95 duration-200">
+        <div className="w-full max-w-sm bg-[#161211] border border-[#2c2320] rounded-2xl p-6 shadow-2xl relative select-none animate-in zoom-in-95 duration-150">
           {/* Close button */}
           <button
             onClick={onClose}
-            className="absolute top-5 right-5 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="absolute top-4 right-4 p-1 rounded-lg text-[#9b9baa] hover:text-[#f7f7f9] hover:bg-[#201a18] transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
 
           {/* Header */}
-          <div className="flex flex-col items-center text-center mb-6">
-            <div className="w-12 h-12 rounded-2xl bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 mb-3 shadow-[0_0_20px_rgba(59,130,246,0.3)]">
-              <Activity className="w-6 h-6 animate-pulse" />
+          <div className="flex flex-col items-center text-center mb-5">
+            <div className="w-10 h-10 rounded-xl bg-[#241a2e] border border-[#4a365f]/50 flex items-center justify-center text-[#d5c4fb] mb-2.5">
+              <Activity className="w-5 h-5 animate-pulse" />
             </div>
-            <h2 className="text-xl font-bold text-white font-sans tracking-tight">
+            <h2 className="text-base font-semibold text-[#f7f7f9] tracking-tight">
               Acceso a la Consola
             </h2>
-            <p className="text-xs font-mono text-slate-400 mt-1">
-              Control de Acceso Basado en Roles (RBAC) &bull; JWT HS256
+            <p className="text-[10px] font-mono text-[#9b9baa] mt-0.5">
+              Control de Acceso Basado en Roles (RBAC) &bull; JWT
             </p>
           </div>
 
           {/* Error Message */}
           {(localError || authError) && (
-            <div className="mb-5 p-3 rounded-xl bg-rose-950/60 border border-rose-800/80 flex items-start gap-2.5 text-xs text-rose-300 font-mono">
-              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-              <span>{localError || authError}</span>
+            <div className="mb-4 p-2.5 rounded-xl bg-[#291418] border border-[#521b25] flex items-start gap-2 text-xs text-[#fca5a5] font-mono">
+              <AlertCircle className="w-3.5 h-3.5 text-[#f87171] shrink-0 mt-0.5" />
+              <span className="leading-tight">{localError || authError}</span>
             </div>
           )}
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-3">
             <div>
-              <label className="block text-xs font-mono uppercase text-slate-400 mb-1.5">
+              <label className="block text-[10px] font-mono uppercase text-[#9b9baa] mb-1">
                 Usuario
               </label>
               <div className="relative">
-                <User className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-500" />
+                <User className="w-3.5 h-3.5 absolute left-3 top-3 text-[#737384]" />
                 <input
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
                   placeholder="admin o viewer"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#070b14] border border-slate-800 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-mono"
+                  className="w-full pl-9 pr-3 py-2 rounded-xl bg-[#110e0d] border border-[#28201d] text-xs text-[#ececf1] placeholder-[#5c4d47] focus:outline-none focus:border-[#844dea] font-mono"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-mono uppercase text-slate-400 mb-1.5">
+              <label className="block text-[10px] font-mono uppercase text-[#9b9baa] mb-1">
                 Contraseña
               </label>
               <div className="relative">
-                <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-500" />
+                <Lock className="w-3.5 h-3.5 absolute left-3 top-3 text-[#737384]" />
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   placeholder="••••••••••••"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#070b14] border border-slate-800 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-mono"
+                  className="w-full pl-9 pr-3 py-2 rounded-xl bg-[#110e0d] border border-[#28201d] text-xs text-[#ececf1] placeholder-[#5c4d47] focus:outline-none focus:border-[#844dea] font-mono"
                 />
               </div>
             </div>
@@ -131,39 +130,39 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-[0.99] text-white font-medium text-sm transition-all shadow-lg shadow-blue-600/30 flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full py-2.5 px-4 rounded-xl bg-[#844dea] hover:bg-[#9f73f2] active:scale-[0.99] text-white font-medium text-xs transition-all shadow-md flex items-center justify-center gap-1.5 disabled:opacity-50 mt-1"
             >
               {loading ? (
-                <span>Validando Credenciales...</span>
+                <span>Validando...</span>
               ) : (
                 <>
                   <span>Ingresar a la Plataforma</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </>
               )}
             </button>
           </form>
 
           {/* 1-Click Evaluation Shortcuts */}
-          <div className="mt-6 pt-5 border-t border-slate-800/80">
-            <div className="text-[11px] font-mono uppercase tracking-wider text-slate-400 mb-2.5 text-center flex items-center justify-center gap-1.5">
-              <KeyRound className="w-3.5 h-3.5 text-amber-400" />
-              <span>Perfiles para Evaluación Rápida</span>
+          <div className="mt-4 pt-4 border-t border-[#241c19]">
+            <div className="text-[10px] font-mono uppercase tracking-wider text-[#9b9baa] mb-2 text-center flex items-center justify-center gap-1">
+              <KeyRound className="w-3 h-3 text-[#d5c4fb]" />
+              <span>Atajos de Evaluación</span>
             </div>
 
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => handleQuickLogin('admin')}
                 disabled={loading}
-                className="p-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-left transition-all hover:scale-[1.02] active:scale-[0.98]"
+                className="p-2 rounded-xl bg-[#20181b] hover:bg-[#2b1f24] border border-[#3f2732] text-left transition-all"
               >
-                <div className="text-xs font-bold text-rose-300 font-mono flex items-center justify-between">
+                <div className="text-[11px] font-semibold text-[#fca5a5] font-mono flex items-center justify-between">
                   <span>ADMIN</span>
-                  <span className="text-[9px] bg-rose-500/20 text-rose-300 px-1 py-0.5 rounded">Auditor</span>
+                  <span className="text-[9px] bg-[#3f2732] text-[#fca5a5] px-1 rounded">Auditor</span>
                 </div>
-                <div className="text-[10px] text-slate-400 mt-1 leading-tight font-sans">
-                  Cuarentena, triggers Airflow y linaje
+                <div className="text-[9px] text-[#9b9baa] mt-0.5 font-sans leading-tight">
+                  Cuarentena y control
                 </div>
               </button>
 
@@ -171,14 +170,14 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
                 type="button"
                 onClick={() => handleQuickLogin('viewer')}
                 disabled={loading}
-                className="p-2.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-left transition-all hover:scale-[1.02] active:scale-[0.98]"
+                className="p-2 rounded-xl bg-[#1a1727] hover:bg-[#221e33] border border-[#3b3252] text-left transition-all"
               >
-                <div className="text-xs font-bold text-blue-300 font-mono flex items-center justify-between">
+                <div className="text-[11px] font-semibold text-[#d5c4fb] font-mono flex items-center justify-between">
                   <span>VIEWER</span>
-                  <span className="text-[9px] bg-blue-500/20 text-blue-300 px-1 py-0.5 rounded">Analista</span>
+                  <span className="text-[9px] bg-[#3b3252] text-[#d5c4fb] px-1 rounded">Analista</span>
                 </div>
-                <div className="text-[10px] text-slate-400 mt-1 leading-tight font-sans">
-                  Mapa táctico, feeds, charts y reportes
+                <div className="text-[9px] text-[#9b9baa] mt-0.5 font-sans leading-tight">
+                  Lectura operativa
                 </div>
               </button>
             </div>
@@ -188,4 +187,3 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
     </>
   );
 };
-

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { AiReport } from '../types';
 import { api } from '../services/api';
-import { Bot, FileDown, CheckCircle2, ShieldAlert, Cpu, Sparkles, Download, Printer } from 'lucide-react';
+import { Bot, CheckCircle2, Cpu, Sparkles, Download, Printer } from 'lucide-react';
 
 interface AiReportCardProps {
   report: AiReport | null;
@@ -23,22 +23,22 @@ export const AiReportCard: React.FC<AiReportCardProps> = ({ report, loading }) =
   };
 
   const getProviderBadge = (provider?: string) => {
-    if (provider === 'gemini') {
+    if (provider === 'groq') {
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-bold bg-blue-500/10 text-blue-400 border border-blue-500/30">
-          <Sparkles className="w-3 h-3" /> Gemini 3.8 Flash
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-mono font-medium bg-[#241a2e] text-[#d5c4fb] border border-[#4a365f]/50">
+          <Cpu className="w-3 h-3 text-[#d5c4fb]" /> Groq (gpt-oss-120b)
         </span>
       );
     }
-    if (provider === 'groq') {
+    if (provider === 'gemini') {
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-bold bg-orange-500/10 text-orange-400 border border-orange-500/30">
-          <Cpu className="w-3 h-3" /> Groq Failover (gpt-oss-120b)
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-mono font-medium bg-[#241a2e] text-[#d5c4fb] border border-[#4a365f]/50">
+          <Sparkles className="w-3 h-3 text-[#d5c4fb]" /> Gemini Flash
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-bold bg-purple-500/10 text-purple-400 border border-purple-500/30">
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-mono font-medium bg-[#201a18] text-[#ececf1] border border-[#332b27]">
         <Bot className="w-3 h-3" /> Motor Determinista
       </span>
     );
@@ -46,30 +46,30 @@ export const AiReportCard: React.FC<AiReportCardProps> = ({ report, loading }) =
 
   if (loading && !report) {
     return (
-      <div className="h-64 bg-dark-900 rounded-2xl border border-white/5 animate-pulse p-6" />
+      <div className="h-64 bg-[#171211] rounded-2xl border border-[#261f1c] animate-pulse p-6" />
     );
   }
 
   return (
-    <div className="bg-dark-900/90 backdrop-blur-md border border-white/10 rounded-2xl p-5 shadow-xl">
+    <div className="bg-[#171211] border border-[#261f1c] rounded-2xl p-5 shadow-sm space-y-4">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-white/10">
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-[#261f1c]">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-cobalt-500/10 text-cobalt-400 rounded-xl border border-cobalt-500/20">
-            <Bot className="w-5 h-5" />
+          <div className="p-2 bg-[#241a2e] text-[#d5c4fb] rounded-xl border border-[#4a365f]/40">
+            <Bot className="w-4 h-4" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-xs font-mono font-bold text-white tracking-wider uppercase">
+              <h3 className="text-xs font-mono font-semibold text-[#f7f7f9] tracking-wider uppercase">
                 Boletín Ejecutivo Generado por IA
               </h3>
               {report?.validation_passed && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-mono font-medium bg-[#14231b] text-[#86efac] border border-[#234231]/60">
                   <CheckCircle2 className="w-3 h-3" /> CERO ALUCINACIONES AUDITADO
                 </span>
               )}
             </div>
-            <p className="text-[11px] text-slate-400 font-mono">
+            <p className="text-[11px] text-[#9b9baa] font-mono">
               Evaluación multimodelo resiliente con verificación numérica por Regex en `validator.py`
             </p>
           </div>
@@ -81,7 +81,7 @@ export const AiReportCard: React.FC<AiReportCardProps> = ({ report, loading }) =
           <button
             onClick={() => handleExport('csv')}
             disabled={exporting !== null}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-dark-950 hover:bg-dark-850 text-slate-300 hover:text-white text-xs font-mono font-bold rounded-xl border border-white/10 transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#1f1715] hover:bg-[#281e1b] text-[#ececf1] text-xs font-mono font-medium rounded-xl border border-[#2b211e] transition-colors disabled:opacity-50"
           >
             <Download className="w-3.5 h-3.5" />
             <span>{exporting === 'csv' ? 'Exportando...' : 'CSV'}</span>
@@ -89,7 +89,7 @@ export const AiReportCard: React.FC<AiReportCardProps> = ({ report, loading }) =
           <button
             onClick={() => handleExport('html')}
             disabled={exporting !== null}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-cobalt-500 hover:bg-cobalt-600 text-white text-xs font-mono font-bold rounded-xl shadow-glow-cobalt transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#844dea] hover:bg-[#9f73f2] text-white text-xs font-mono font-medium rounded-xl transition-colors disabled:opacity-50 shadow-sm"
           >
             <Printer className="w-3.5 h-3.5" />
             <span>{exporting === 'html' ? 'Exportando...' : 'Imprimir / PDF'}</span>
@@ -99,39 +99,39 @@ export const AiReportCard: React.FC<AiReportCardProps> = ({ report, loading }) =
 
       {/* Content */}
       {report ? (
-        <div className="mt-4 space-y-4 font-mono">
+        <div className="space-y-4 font-mono">
           {/* Micro KPIs Grid from report */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-            <div className="p-3 bg-dark-950 rounded-xl border border-white/5">
-              <span className="text-[10px] text-slate-500 uppercase">Sismos Analizados</span>
-              <div className="text-base font-bold text-white mt-0.5">{report.total_earthquakes}</div>
+            <div className="p-3 bg-[#120e0d] rounded-xl border border-[#241c19]">
+              <span className="text-[10px] text-[#9b9baa] uppercase">Sismos Analizados</span>
+              <div className="text-base font-bold text-[#f7f7f9] mt-0.5">{report.total_earthquakes}</div>
             </div>
-            <div className="p-3 bg-dark-950 rounded-xl border border-white/5">
-              <span className="text-[10px] text-slate-500 uppercase">Magnitud Máxima</span>
-              <div className="text-base font-bold text-coral-400 mt-0.5">{report.max_magnitude} Mw</div>
+            <div className="p-3 bg-[#120e0d] rounded-xl border border-[#241c19]">
+              <span className="text-[10px] text-[#9b9baa] uppercase">Magnitud Máxima</span>
+              <div className="text-base font-bold text-[#fb923c] mt-0.5">{report.max_magnitude} Mw</div>
             </div>
-            <div className="p-3 bg-dark-950 rounded-xl border border-white/5">
-              <span className="text-[10px] text-slate-500 uppercase">Anomalías Detectadas</span>
-              <div className="text-base font-bold text-amber-400 mt-0.5">{report.anomalies_detected}</div>
+            <div className="p-3 bg-[#120e0d] rounded-xl border border-[#241c19]">
+              <span className="text-[10px] text-[#9b9baa] uppercase">Anomalías Detectadas</span>
+              <div className="text-base font-bold text-[#fde047] mt-0.5">{report.anomalies_detected}</div>
             </div>
-            <div className="p-3 bg-dark-950 rounded-xl border border-white/5">
-              <span className="text-[10px] text-slate-500 uppercase">Modelo Evaluador</span>
-              <div className="text-xs font-bold text-slate-300 mt-1 truncate">{report.model_name || report.provider}</div>
+            <div className="p-3 bg-[#120e0d] rounded-xl border border-[#241c19]">
+              <span className="text-[10px] text-[#9b9baa] uppercase">Modelo Evaluador</span>
+              <div className="text-xs font-semibold text-[#ececf1] mt-1 truncate">{report.model_name || report.provider}</div>
             </div>
           </div>
 
           {/* Narrative Summary */}
-          <div className="p-4 bg-dark-950 rounded-xl border border-white/5 text-xs text-slate-300 leading-relaxed font-sans whitespace-pre-line">
+          <div className="p-4 bg-[#120e0d] rounded-xl border border-[#241c19] text-xs text-[#ececf1] leading-relaxed font-sans whitespace-pre-line">
             {report.summary_text}
           </div>
 
-          <div className="flex items-center justify-between text-[10px] text-slate-500 pt-2 border-t border-white/5">
+          <div className="flex items-center justify-between text-[10px] text-[#9b9baa] pt-2 border-t border-[#241c19]">
             <span>Fecha del Reporte: {report.report_date}</span>
             <span>Generado: {new Date(report.created_at).toLocaleString()}</span>
           </div>
         </div>
       ) : (
-        <div className="p-8 text-center text-xs font-mono text-slate-500">
+        <div className="p-8 text-center text-xs font-mono text-[#9b9baa]">
           No hay informe ejecutivo disponible para el ciclo actual. El DAG `dag_reporte_ia_anomalias` se ejecuta a las 00:00 UTC.
         </div>
       )}
