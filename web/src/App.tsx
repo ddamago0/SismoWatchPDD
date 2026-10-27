@@ -19,6 +19,7 @@ import { AiReportCard } from './components/AiReportCard';
 import { PipelineHealthPanel } from './components/PipelineHealthPanel';
 import { AdminAuditPanel } from './components/AdminAuditPanel';
 import { AiChatDrawer } from './components/AiChatDrawer';
+import { computeHubImpacts } from './data/superAppHubs';
 
 const MainApp: React.FC = () => {
   const { token, isAuthenticated, isAdmin, showLoginModal, setShowLoginModal } = useAuth();
@@ -46,6 +47,11 @@ const MainApp: React.FC = () => {
   // UI State
   const [loading, setLoading] = useState(true);
   const [cartographyMode, setCartographyMode] = useState<'3d' | '2d'>('3d');
+
+  // Hubs Logísticos de SuperApp en riesgo sísmico
+  const hubAlertsCount = React.useMemo(() => {
+    return computeHubImpacts(events).filter((h) => h.status !== 'OPERATIVO').length;
+  }, [events]);
 
   // Strict RBAC Navigation Guard: Viewer must NEVER stay on admin_audit
   useEffect(() => {
@@ -217,9 +223,20 @@ const MainApp: React.FC = () => {
                   </button>
                 </div>
               </div>
-              <span className="text-[11px] text-[#78716c] font-mono hidden md:inline">
-                {cartographyMode === '3d' ? '✦ Render 3D con ondas concéntricas y balizas láser' : '✦ Cartografía vectorial de precisión GIS'}
-              </span>
+              <div className="flex items-center gap-3">
+                {hubAlertsCount > 0 ? (
+                  <span className="flex items-center gap-1.5 text-[11px] font-mono font-medium text-rose-300 bg-rose-500/15 border border-rose-500/30 px-2.5 py-1 rounded-md animate-pulse">
+                    🚨 {hubAlertsCount} Hub(s) en Riesgo Sísmico
+                  </span>
+                ) : (
+                  <span className="hidden sm:flex items-center gap-1.5 text-[11px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/25 px-2.5 py-1 rounded-md">
+                    🏢 Red SuperApp Activa (10 Hubs)
+                  </span>
+                )}
+                <span className="text-[11px] text-[#78716c] font-mono hidden md:inline">
+                  {cartographyMode === '3d' ? '✦ Render 3D con ondas concéntricas y balizas láser' : '✦ Cartografía vectorial de precisión GIS'}
+                </span>
+              </div>
             </div>
 
             {/* Zona de Operaciones: Cartografía Táctica + Feed Reciente */}

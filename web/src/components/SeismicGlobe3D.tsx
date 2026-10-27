@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import Globe, { GlobeMethods } from 'react-globe.gl';
-import { EarthquakeEvent, SeismicAnomaly } from '../types';
-import { Waves, Compass, RotateCcw, Radio, Sparkles, Layers, Navigation } from 'lucide-react';
+import { Waves, Compass, RotateCcw, Radio, Sparkles, Layers, Navigation, Building2, ShieldAlert } from 'lucide-react';
+import { EarthquakeEvent, SeismicAnomaly, SuperAppHub } from '../types';
+import { computeHubImpacts } from '../data/superAppHubs';
 
 interface SeismicGlobe3DProps {
   events: EarthquakeEvent[];
@@ -195,7 +196,17 @@ export const SeismicGlobe3D: React.FC<SeismicGlobe3DProps> = ({
   const [isRotating, setIsRotating] = useState<boolean>(true);
   const [showBeacons, setShowBeacons] = useState<boolean>(false);
   const [showPlates, setShowPlates] = useState<boolean>(true);
+  const [showHubs, setShowHubs] = useState<boolean>(true);
   const [platesGeoJson, setPlatesGeoJson] = useState<any>(null);
+
+  // Evaluación de impacto sísmico en Hubs Logísticos de SuperApp
+  const computedHubs = useMemo(() => {
+    return computeHubImpacts(events);
+  }, [events]);
+
+  const alertHubsCount = useMemo(() => {
+    return computedHubs.filter((h) => h.status !== 'OPERATIVO').length;
+  }, [computedHubs]);
 
   // Cargar modelo de fallas tectónicas globales PB2002
   useEffect(() => {
@@ -298,6 +309,33 @@ export const SeismicGlobe3D: React.FC<SeismicGlobe3DProps> = ({
       };
     });
 
+    // Pulso táctico de advertencia en Hubs bajo alerta o evacuación
+    if (showHubs) {
+      computedHubs.forEach((hub) => {
+        if (hub.status === 'EVACUACIÓN_INMEDIATA') {
+          list.push({
+            lat: hub.latitude,
+            lng: hub.longitude,
+            color: 'rgba(239, 68, 68, 0.95)',
+            maxR: 8.0,
+            propagationSpeed: 3.0,
+            repeatPeriod: 800,
+            isTargetPulse: false,
+          });
+        } else if (hub.status === 'ALERTA_PRECAUCIÓN') {
+          list.push({
+            lat: hub.latitude,
+            lng: hub.longitude,
+            color: 'rgba(245, 158, 11, 0.85)',
+            maxR: 5.5,
+            propagationSpeed: 2.0,
+            repeatPeriod: 1300,
+            isTargetPulse: false,
+          });
+        }
+      });
+    }
+
     // Pulso táctico de focalización si hay sismo seleccionado
     if (selectedEvent) {
       list.push({
@@ -312,7 +350,7 @@ export const SeismicGlobe3D: React.FC<SeismicGlobe3DProps> = ({
     }
 
     return list;
-  }, [events, selectedEvent]);
+  }, [events, selectedEvent, showHubs, computedHubs]);
 
   const resetView = () => {
     if (globeRef.current) {
@@ -362,6 +400,36 @@ export const SeismicGlobe3D: React.FC<SeismicGlobe3DProps> = ({
             ? '<div style="margin-top: 6px; background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #fca5a5; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; text-align: center;">⚠️ ALERTA DE TSUNAMI EMITIDA</div>'
             : ''
         }
+      </div>
+    `;
+  };
+
+  const renderHubTooltip = (hub: SuperAppHub): string => {
+    const isEvac = hub.status === 'EVACUACIÓN_INMEDIATA';
+    const isWarn = hub.status === 'ALERTA_PRECAUCIÓN';
+    const statusColor = isEvac ? '#ef4444' : isWarn ? '#f59e0b' : '#10b981';
+    const statusBg = isEvac ? 'rgba(239, 68, 68, 0.2)' : isWarn ? 'rgba(245, 158, 11, 0.2)' : 'rgba(16, 185, 129, 0.2)';
+    const statusBorder = isEvac ? '#ef4444' : isWarn ? '#f59e0b' : '#10b981';
+    const statusText = isEvac ? 'EVACUACIÓN INMEDIATA' : isWarn ? 'ALERTA PRECAUCIÓN' : 'OPERATIVO NORMAL';
+
+    return `
+      <div style="background: rgba(15, 23, 42, 0.96); border: 1px solid ${statusBorder}; border-radius: 8px; padding: 12px 14px; font-family: sans-serif; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.6); min-width: 250px; color: #f8fafc;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 6px; margin-bottom: 8px;">
+          <span style="font-family: monospace; font-size: 11px; font-weight: bold; color: #38bdf8;">🏢 HUB SUPERAPP</span>
+          <span style="background: ${statusBg}; border: 1px solid ${statusBorder}; color: ${statusColor}; font-weight: 800; font-size: 10px; padding: 2px 6px; border-radius: 4px;">
+            ${statusText}
+          </span>
+        </div>
+        <div style="font-size: 13px; font-weight: 700; color: #ffffff; margin-bottom: 2px;">${hub.name}</div>
+        <div style="font-size: 11px; color: #94a3b8; margin-bottom: 8px;">${hub.city}, ${hub.country}</div>
+        <div style="font-size: 11px; color: #cbd5e1; display: grid; grid-template-columns: 1fr; gap: 4px; background: rgba(30, 41, 59, 0.5); padding: 6px 8px; border-radius: 6px;">
+          <div>🛵 Flota Activa: <b style="color: #38bdf8;">${hub.activeCouriers} mensajeros</b></div>
+          <div>📍 Sismo más cercano: <b style="color: ${hub.nearestEventDistanceKm !== undefined && hub.nearestEventDistanceKm < 150 ? '#f59e0b' : '#94a3b8'};">${hub.nearestEventDistanceKm !== undefined ? `${hub.nearestEventDistanceKm} km` : 'Sin sismos cercanos'}</b></div>
+          ${hub.triggerEventMag ? `<div style="color: #f87171;">⚠️ Activado por: <b>M ${hub.triggerEventMag.toFixed(1)}</b> (${hub.triggerEventPlace || 'Epicentro'})</div>` : ''}
+        </div>
+        <div style="margin-top: 8px; font-size: 10px; color: #94a3b8; font-style: italic;">
+          ${isEvac ? '🚨 Protocolo: Suspender asignación de órdenes y evacuar personal.' : isWarn ? '⚠️ Protocolo: Notificar a repartidores en ruta y verificar inventario.' : '✅ Operación regular sin riesgos geofísicos inminentes.'}
+        </div>
       </div>
     `;
   };
@@ -420,7 +488,28 @@ export const SeismicGlobe3D: React.FC<SeismicGlobe3DProps> = ({
         pathDashGap={0.03}
         pathDashAnimateTime={12000}
         pathLabel={(d: any) => `<div style="background: rgba(15,23,42,0.95); border: 1px solid #b45309; padding: 4px 8px; border-radius: 4px; font-size: 11px; color: #fef3c7; font-family: monospace;">Falla: ${d.name} (${d.type})</div>`}
-        labelsData={[]}
+        // Hubs Logísticos de SuperApp
+        labelsData={showHubs ? computedHubs : []}
+        labelLat={(d: any) => d.latitude}
+        labelLng={(d: any) => d.longitude}
+        labelText={(d: any) => `${d.status === 'EVACUACIÓN_INMEDIATA' ? '🚨' : d.status === 'ALERTA_PRECAUCIÓN' ? '⚠️' : '🏢'} ${d.city}`}
+        labelSize={1.15}
+        labelDotRadius={(d: any) => (d.status === 'EVACUACIÓN_INMEDIATA' ? 0.7 : 0.4)}
+        labelColor={(d: any) =>
+          d.status === 'EVACUACIÓN_INMEDIATA'
+            ? 'rgba(239, 68, 68, 0.95)'
+            : d.status === 'ALERTA_PRECAUCIÓN'
+            ? 'rgba(245, 158, 11, 0.95)'
+            : 'rgba(56, 189, 248, 0.90)'
+        }
+        labelAltitude={0.015}
+        labelLabel={(d: any) => renderHubTooltip(d)}
+        onLabelClick={(d: any) => {
+          if (globeRef.current) {
+            setIsRotating(false);
+            globeRef.current.pointOfView({ lat: d.latitude, lng: d.longitude, altitude: 1.4 }, 1000);
+          }
+        }}
       />
 
       {/* Cockpit HUD: Controles Superiores y Presets de Vuelo */}
@@ -451,6 +540,21 @@ export const SeismicGlobe3D: React.FC<SeismicGlobe3DProps> = ({
           >
             <Layers className="w-3.5 h-3.5" />
             <span>{showPlates ? 'Placas: ON' : 'Placas: OFF'}</span>
+          </button>
+
+          <button
+            onClick={() => setShowHubs(!showHubs)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border backdrop-blur text-xs font-medium shadow-lg transition-colors cursor-pointer ${
+              showHubs
+                ? alertHubsCount > 0
+                  ? 'bg-rose-500/20 text-rose-300 border-rose-500/40 animate-pulse'
+                  : 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'
+                : 'bg-slate-900/80 text-slate-400 border-slate-700/80 hover:text-white'
+            }`}
+            title="Alternar visualización de centros logísticos y dark stores de SuperApp"
+          >
+            <Building2 className="w-3.5 h-3.5" />
+            <span>{showHubs ? `Hubs: ON (${computedHubs.length})` : 'Hubs: OFF'}</span>
           </button>
 
           <button
@@ -495,6 +599,14 @@ export const SeismicGlobe3D: React.FC<SeismicGlobe3DProps> = ({
         </div>
       </div>
 
+      {/* Alerta de Hubs en Riesgo Sísmico */}
+      {showHubs && alertHubsCount > 0 && (
+        <div className="absolute top-16 left-4 z-20 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-rose-500/20 border border-rose-500/40 text-rose-200 text-xs font-semibold backdrop-blur shadow-xl animate-pulse">
+          <ShieldAlert className="w-4 h-4 text-rose-400" />
+          <span>{alertHubsCount} Hub(s) SuperApp en radio de impacto</span>
+        </div>
+      )}
+
       {/* Indicador de anomalías activas */}
       {anomalies.length > 0 && (
         <div className="absolute top-16 right-4 z-20 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-medium backdrop-blur">
@@ -507,7 +619,7 @@ export const SeismicGlobe3D: React.FC<SeismicGlobe3DProps> = ({
       <div className="absolute bottom-4 left-4 z-20 bg-slate-900/90 backdrop-blur border border-slate-800 rounded-xl p-3 text-xs shadow-2xl space-y-2 pointer-events-auto">
         <div className="flex items-center gap-1.5 font-semibold text-slate-200 border-b border-slate-800 pb-1.5">
           <Waves className="w-4 h-4 text-cyan-400" />
-          <span>Intensidad Sísmica & Magnitudes (Globo 3D)</span>
+          <span>Intensidad Sísmica & Logística SuperApp (3D)</span>
         </div>
         <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
           <div className="flex items-center gap-2">
@@ -527,12 +639,18 @@ export const SeismicGlobe3D: React.FC<SeismicGlobe3DProps> = ({
             <span className="text-slate-300">M &lt; 2.5</span>
           </div>
         </div>
-        <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-slate-800 text-[10px]">
-          <div className="flex items-center gap-1.5">
-            <span className="w-3 h-0.5 bg-[#f59e0b] rounded-full inline-block"></span>
-            <span className="text-amber-300/90 font-mono">Fallas Tectónicas (PB2002)</span>
+        <div className="flex flex-col gap-1 pt-1.5 border-t border-slate-800 text-[10px]">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5">
+              <span className="w-3 h-0.5 bg-[#f59e0b] rounded-full inline-block"></span>
+              <span className="text-amber-300/90 font-mono">Fallas Tectónicas (PB2002)</span>
+            </div>
+            <span className="text-slate-500 font-mono">◎ Clic focaliza</span>
           </div>
-          <span className="text-slate-500 font-mono">◎ Clic focaliza 3D</span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px]">🏢</span>
+            <span className="text-sky-300/90 font-mono">Hubs SuperApp (Dark Stores & Fulfilment)</span>
+          </div>
         </div>
       </div>
     </div>
