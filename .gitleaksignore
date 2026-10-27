@@ -1,5 +1,4 @@
 # Gitleaks ignore file for test fixtures
-5da32b20279be9788e870e7b720e5a57dbec9591:tests/test_idempotency.py:generic-api-key:19
-5da32b20279be9788e870e7b720e5a57dbec9591:tests/test_api_auth.py:generic-api-key:74
-5da32b20279be9788e870e7b720e5a57dbec9591:tests/test_api_auth.py:generic-api-key:94
-
+addc4354d7a2e60afddb5f4b6f63a5ab01581564:tests/test_idempotency.py:generic-api-key:19
+addc4354d7a2e60afddb5f4b6f63a5ab01581564:tests/test_api_auth.py:generic-api-key:74
+addc4354d7a2e60afddb5f4b6f63a5ab01581564:tests/test_api_auth.py:generic-api-key:94

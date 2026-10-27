@@ -15,7 +15,7 @@
 [main]	INFO	cli include tests: None
 [main]	INFO	cli exclude tests: None
 [main]	INFO	running on Python 3.12.3
-Run started:2026-10-27 14:53:25.744381+00:00
+Run started:2026-10-27 15:55:59.413571+00:00
 
 Test results:
 >> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
@@ -141,7 +141,7 @@ Test results:
 --------------------------------------------------
 
 Code scanned:
-	Total lines of code: 2505
+	Total lines of code: 2981
 	Total lines skipped (#nosec): 0
 	Total potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 0
 

@@ -192,6 +192,26 @@ cur.execute("""
     ON CONFLICT (report_date) DO NOTHING;
 """, (report_narrative, len(curated_data), round(avg_mag, 2)))
 
+# Sembrar anomalía demostrativa de enjambre sísmico en curated.seismic_anomalies
+cur.execute("""
+    INSERT INTO curated.seismic_anomalies
+        (anomaly_type, region, event_id, cluster_size, latitude, longitude, radius_km, z_score, max_magnitude, severity, explanation, detected_at)
+    VALUES (
+        'SEISMIC_SWARM_EVENT',
+        'California / San Andreas Fault',
+        'demo_swarm_ca',
+        4,
+        34.05,
+        -118.25,
+        28.4,
+        2.85,
+        4.2,
+        'HIGH',
+        'Enjambre sísmico (Swarm Event) detectado en California: 4 eventos concentrados en un radio de 28.4 km.',
+        CURRENT_TIMESTAMP
+    );
+""")
+
 conn.commit()
 conn.close()
 print("   ✅ Datos iniciales y sismo en cuarentena sembrados exitosamente.")

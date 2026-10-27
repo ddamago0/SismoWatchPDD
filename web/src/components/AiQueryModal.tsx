@@ -17,6 +17,7 @@ export const AiQueryModal: React.FC<AiQueryModalProps> = ({ isOpen, onClose }) =
   if (!isOpen) return null;
 
   const suggestedQuestions = [
+    '¿Cuál fue el sismo más fuerte en las últimas 48 horas?',
     '¿Cuáles son los 5 sismos de mayor magnitud registrados?',
     '¿Cuántos sismos con alerta de tsunami existen?',
     'Top regiones con mayor cantidad de eventos',

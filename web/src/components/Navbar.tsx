@@ -2,13 +2,22 @@ import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Activity, ShieldCheck, User, LogIn, LogOut, Sparkles, Database } from 'lucide-react';
 
+import { SSEConnectionStatus } from '../services/sse';
+
 interface NavbarProps {
-  isLive: boolean;
+  connectionStatus: SSEConnectionStatus;
   onOpenAiQuery: () => void;
   onOpenAirflow?: () => void;
+  activeTab: 'dashboard' | 'lineage';
+  onTabChange: (tab: 'dashboard' | 'lineage') => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ isLive, onOpenAiQuery }) => {
+export const Navbar: React.FC<NavbarProps> = ({
+  connectionStatus,
+  onOpenAiQuery,
+  activeTab,
+  onTabChange,
+}) => {
   const { user, isAdmin, logout, setShowLoginModal } = useAuth();
 
   return (
@@ -30,22 +39,56 @@ export const Navbar: React.FC<NavbarProps> = ({ isLive, onOpenAiQuery }) => {
           </div>
         </div>
 
+        {/* Navigation Tabs (Dashboard vs Linaje/Auditoría) */}
+        <div className="hidden md:flex items-center bg-slate-950/80 p-1 rounded-lg border border-slate-800">
+          <button
+            onClick={() => onTabChange('dashboard')}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+              activeTab === 'dashboard'
+                ? 'bg-rose-600 text-white shadow-sm'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            Dashboard Operativo
+          </button>
+          <button
+            onClick={() => onTabChange('lineage')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+              activeTab === 'lineage'
+                ? 'bg-rose-600 text-white shadow-sm'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Database className="w-3.5 h-3.5" />
+            <span>Linaje & Auditoría</span>
+          </button>
+        </div>
+
         {/* Live Indicator + Actions */}
         <div className="flex items-center gap-3">
           {/* Live Indicator */}
           <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-950/70 border border-slate-800 rounded-full">
             <span className="relative flex h-2.5 w-2.5">
-              {isLive ? (
+              {connectionStatus === 'connected' ? (
                 <>
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
                 </>
+              ) : connectionStatus === 'reconnecting' ? (
+                <>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+                </>
               ) : (
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
               )}
             </span>
             <span className="text-xs font-semibold uppercase tracking-wider text-slate-300">
-              {isLive ? 'SSE En Vivo' : 'Conectando...'}
+              {connectionStatus === 'connected'
+                ? 'SSE En Vivo'
+                : connectionStatus === 'reconnecting'
+                ? 'Reconectando...'
+                : 'Desconectado'}
             </span>
           </div>
 

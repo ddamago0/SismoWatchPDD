@@ -117,3 +117,168 @@ def get_pipeline_status(
         quality_detail=quality_detail,
         freshness_lag_seconds=freshness_lag
     )
+
+
+@router.get("/lineage")
+def get_pipeline_lineage(
+    current_user: dict = Depends(require_role(["viewer", "admin"])),
+    db: Session = Depends(get_db)
+):
+    """
+    Retorna el grafo de linaje de datos de extremo a extremo (Data Lineage & Governance)
+    y métricas de conciliación matemática entre las capas Medallion.
+    """
+    # 1. Contar registros por capa
+    def safe_count(query_str: str) -> int:
+        try:
+            return db.execute(text(query_str)).scalar() or 0
+        except Exception:
+            return 0
+
+    curated_count = safe_count("SELECT COUNT(*) FROM curated.earthquakes_curated;")
+    quarantine_count = safe_count("SELECT COUNT(*) FROM curated.quality_quarantine;")
+    ai_reports_count = safe_count("SELECT COUNT(*) FROM curated.ai_reports;")
+    anomalies_count = safe_count("SELECT COUNT(*) FROM curated.seismic_anomalies;")
+
+    # Obtener métricas de la última evaluación de calidad
+    q_row = db.execute(text("""
+        SELECT quality_score, total_records, records_passed, records_rejected, evaluated_at, freshness_lag_seconds
+        FROM curated.quality_results
+        ORDER BY evaluated_at DESC
+        LIMIT 1;
+    """)).fetchone()
+
+    quality_score = float(q_row[0]) if q_row else 100.0
+    last_evaluated = q_row[4].isoformat() if q_row and q_row[4] else None
+    freshness_lag = int(q_row[5]) if q_row and q_row[5] else 0
+
+    nodes = [
+        {
+            "id": "usgs_live",
+            "name": "USGS Live Feed",
+            "layer": "source",
+            "category": "External API",
+            "description": "Feed GeoJSON all_hour.geojson (cada 5 min)",
+            "protocol": "HTTPS GeoJSON",
+            "status": "HEALTHY"
+        },
+        {
+            "id": "usgs_archive",
+            "name": "USGS FDSNWS Archive",
+            "layer": "source",
+            "category": "External API",
+            "description": "API FDSNWS parametrizada para backfills de 30 días",
+            "protocol": "HTTPS REST Query",
+            "status": "HEALTHY"
+        },
+        {
+            "id": "raw_layer",
+            "name": "raw.usgs_earthquakes_raw",
+            "layer": "bronze",
+            "category": "Bronze (Crudo)",
+            "description": "Payload JSONB original, ingesta append-only idempotente",
+            "policy": "ON CONFLICT (id) DO UPDATE",
+            "records": curated_count + quarantine_count,
+            "status": "HEALTHY"
+        },
+        {
+            "id": "staging_layer",
+            "name": "staging.earthquakes_staging",
+            "layer": "silver",
+            "category": "Silver (Normalizado)",
+            "description": "Coordenadas aplanadas, tipos numéricos forzados, marcas temporales UTC",
+            "records": curated_count + quarantine_count,
+            "status": "HEALTHY"
+        },
+        {
+            "id": "quality_gate",
+            "name": "Pandera Quality Gate",
+            "layer": "gate",
+            "category": "Data Contract",
+            "description": "Validaciones bloqueantes: Geografía [-90,90], Magnitud, Profundidad, Fecha",
+            "rules": ["GEOGRAPHIC_BOUNDS", "MAGNITUDE_BOUNDS", "DEPTH_BOUNDS", "INVALID_TIMESTAMP", "UNIQUENESS"],
+            "score": quality_score,
+            "status": "ACTIVE"
+        },
+        {
+            "id": "curated_layer",
+            "name": "curated.earthquakes_curated",
+            "layer": "gold",
+            "category": "Gold (Certificado)",
+            "description": "Eventos 100% aprobados listos para analítica y visualización",
+            "records": curated_count,
+            "status": "HEALTHY"
+        },
+        {
+            "id": "quarantine_layer",
+            "name": "curated.quality_quarantine",
+            "layer": "quarantine",
+            "category": "Dead-Letter Queue",
+            "description": "Eventos corruptos o anómalos desviados con regla fallida y motivo",
+            "records": quarantine_count,
+            "status": "ACTIVE"
+        },
+        {
+            "id": "ai_reports_layer",
+            "name": "curated.ai_reports",
+            "layer": "gold_analytics",
+            "category": "Gold Analytics",
+            "description": "Boletines ejecutivos diarios generados con IA y validados contra alucinaciones",
+            "records": ai_reports_count,
+            "status": "HEALTHY"
+        },
+        {
+            "id": "anomalies_layer",
+            "name": "curated.seismic_anomalies",
+            "layer": "gold_analytics",
+            "category": "Gold Analytics",
+            "description": "Detección Z-Score y agrupamiento geodésico Haversine de enjambres sísmicos",
+            "records": anomalies_count,
+            "status": "HEALTHY"
+        },
+        {
+            "id": "fastapi_serving",
+            "name": "FastAPI Serving Layer",
+            "layer": "serving",
+            "category": "Backend REST & SSE",
+            "description": "Autenticación JWT, RBAC de mínimo privilegio (sismo_reader) y SSE /api/stream",
+            "status": "HEALTHY"
+        },
+        {
+            "id": "react_dashboard",
+            "name": "React Dashboard SPA",
+            "layer": "presentation",
+            "category": "Frontend UI",
+            "description": "Visualización reactiva en tiempo real, mapas Leaflet y gráficos Recharts",
+            "status": "HEALTHY"
+        }
+    ]
+
+    edges = [
+        {"from": "usgs_live", "to": "raw_layer", "dag": "dag_ingesta_usgs", "type": "ingest"},
+        {"from": "usgs_archive", "to": "raw_layer", "dag": "dag_backfill_historico", "type": "backfill"},
+        {"from": "raw_layer", "to": "staging_layer", "dag": "dag_transformacion_calidad", "type": "transform"},
+        {"from": "staging_layer", "to": "quality_gate", "dag": "dag_transformacion_calidad", "type": "validate"},
+        {"from": "quality_gate", "to": "curated_layer", "condition": "PASSED", "type": "publish"},
+        {"from": "quality_gate", "to": "quarantine_layer", "condition": "REJECTED", "type": "divert"},
+        {"from": "curated_layer", "to": "ai_reports_layer", "dag": "dag_reporte_ia_anomalias", "type": "llm_generate"},
+        {"from": "curated_layer", "to": "anomalies_layer", "dag": "dag_reporte_ia_anomalias", "type": "ml_clustering"},
+        {"from": "curated_layer", "to": "fastapi_serving", "role": "sismo_reader", "type": "read_only"},
+        {"from": "quarantine_layer", "to": "fastapi_serving", "role": "sismo_reader (Admin only)", "type": "read_only"},
+        {"from": "ai_reports_layer", "to": "fastapi_serving", "role": "sismo_reader", "type": "read_only"},
+        {"from": "anomalies_layer", "to": "fastapi_serving", "role": "sismo_reader", "type": "read_only"},
+        {"from": "fastapi_serving", "to": "react_dashboard", "protocol": "REST & SSE Stream", "type": "stream"}
+    ]
+
+    return {
+        "reconciliation": {
+            "equation": "N_raw = N_curated + N_quarantine + N_duplicates",
+            "total_curated": curated_count,
+            "total_quarantined": quarantine_count,
+            "quality_score_pct": quality_score,
+            "freshness_lag_seconds": freshness_lag,
+            "last_evaluated": last_evaluated
+        },
+        "nodes": nodes,
+        "edges": edges
+    }

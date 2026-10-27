@@ -11,7 +11,7 @@ from airflow.include.anomaly_detection import detect_seismic_anomalies, extract_
 from airflow.include.ai.client import generate_executive_report_resilient
 from airflow.include.db_utils import get_db_connection, record_pipeline_run
 from airflow.include.alerts import pipeline_failure_callback
-from psycopg2.extras import Json
+from psycopg2.extras import Json, execute_values
 
 DOC_MD = """
 ### Propósito del DAG
@@ -199,6 +199,33 @@ def reporte_ia_anomalias_pipeline():
                         validation_passed
                     )
                 )
+
+                # Persistencia en tabla analítica especializada curated.seismic_anomalies
+                anomalies_list = metrics.get("anomalies", [])
+                if anomalies_list:
+                    anom_sql = """
+                        INSERT INTO curated.seismic_anomalies
+                            (anomaly_type, region, event_id, cluster_size, latitude, longitude, radius_km, z_score, max_magnitude, severity, explanation, detected_at)
+                        VALUES %s;
+                    """
+                    data_anom = [
+                        (
+                            a.get("type", "UNKNOWN"),
+                            a.get("region"),
+                            a.get("event_id"),
+                            a.get("cluster_size", 1),
+                            a.get("latitude"),
+                            a.get("longitude"),
+                            a.get("radius_km"),
+                            a.get("z_score"),
+                            a.get("max_magnitude"),
+                            a.get("severity", "MEDIUM"),
+                            a.get("explanation", ""),
+                        )
+                        for a in anomalies_list
+                    ]
+                    execute_values(cur, anom_sql, data_anom, template="(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP)")
+
             conn.commit()
         finally:
             conn.close()

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { api } from './services/api';
-import { connectSSE } from './services/sse';
+import { connectSSE, SSEConnectionStatus } from './services/sse';
 import { EarthquakeEvent, KpiData, StatsResponse, AiReport } from './types';
 import { Navbar } from './components/Navbar';
 import { KpiCards } from './components/KpiCards';
@@ -11,13 +11,15 @@ import { AnalyticsCharts } from './components/AnalyticsCharts';
 import { EventsTable } from './components/EventsTable';
 import { AiReportCard } from './components/AiReportCard';
 import { QualityPanel } from './components/QualityPanel';
+import { LineagePanel } from './components/LineagePanel';
 import { AiQueryModal } from './components/AiQueryModal';
 import { LoginModal } from './components/LoginModal';
 import { LoadingState, ErrorState } from './components/States';
 
 const DashboardContent: React.FC = () => {
   const { token, user } = useAuth();
-  const [isLive, setIsLive] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<SSEConnectionStatus>('disconnected');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'lineage'>('dashboard');
   const [isAiQueryOpen, setIsAiQueryOpen] = useState(false);
 
   // Filters State
@@ -28,6 +30,7 @@ const DashboardContent: React.FC = () => {
   // Data State
   const [kpis, setKpis] = useState<KpiData | null>(null);
   const [events, setEvents] = useState<EarthquakeEvent[]>([]);
+  const [anomalies, setAnomalies] = useState<any[]>([]);
   const [totalEvents, setTotalEvents] = useState(0);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -51,7 +54,7 @@ const DashboardContent: React.FC = () => {
 
       const startTime = new Date(Date.now() - hours * 3600 * 1000).toISOString();
 
-      const [kpiRes, eventsRes, statsRes, reportRes] = await Promise.allSettled([
+      const [kpiRes, eventsRes, statsRes, reportRes, anomRes] = await Promise.allSettled([
         api.getKpis(),
         api.getEvents({
           page,
@@ -62,6 +65,7 @@ const DashboardContent: React.FC = () => {
         }),
         api.getStats(hours),
         api.getLatestReport(),
+        api.getAnomalies(),
       ]);
 
       if (kpiRes.status === 'fulfilled') setKpis(kpiRes.value);
@@ -72,6 +76,7 @@ const DashboardContent: React.FC = () => {
       }
       if (statsRes.status === 'fulfilled') setStats(statsRes.value);
       if (reportRes.status === 'fulfilled') setReport(reportRes.value);
+      if (anomRes.status === 'fulfilled') setAnomalies(anomRes.value);
     } catch (err: any) {
       setError(err.message || 'Error al conectar con la API');
     } finally {
@@ -85,7 +90,10 @@ const DashboardContent: React.FC = () => {
 
   // Connect SSE for Real-time streaming
   useEffect(() => {
-    if (!token) return;
+    if (!token) {
+      setConnectionStatus('disconnected');
+      return;
+    }
 
     const cleanup = connectSSE(
       token,
@@ -108,7 +116,7 @@ const DashboardContent: React.FC = () => {
           });
         }
       },
-      (connected) => setIsLive(connected)
+      (status) => setConnectionStatus(status)
     );
 
     return cleanup;
@@ -116,73 +124,84 @@ const DashboardContent: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
-      <Navbar isLive={isLive} onOpenAiQuery={() => setIsAiQueryOpen(true)} />
+      <Navbar
+        connectionStatus={connectionStatus}
+        onOpenAiQuery={() => setIsAiQueryOpen(true)}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        {/* KPI Summary Cards */}
-        <KpiCards kpis={kpis} loading={loading} />
+        {activeTab === 'lineage' ? (
+          <LineagePanel />
+        ) : (
+          <>
+            {/* KPI Summary Cards */}
+            <KpiCards kpis={kpis} loading={loading} />
 
-        {/* Filters Toolbar */}
-        <FiltersBar
-          timeRange={timeRange}
-          onTimeRangeChange={(r) => {
-            setTimeRange(r);
-            setPage(1);
-          }}
-          minMagnitude={minMagnitude}
-          onMinMagnitudeChange={(m) => {
-            setMinMagnitude(m);
-            setPage(1);
-          }}
-          searchRegion={searchRegion}
-          onSearchRegionChange={(s) => {
-            setSearchRegion(s);
-            setPage(1);
-          }}
-          onRefresh={loadDashboardData}
-          loading={loading}
-        />
+            {/* Filters Toolbar */}
+            <FiltersBar
+              timeRange={timeRange}
+              onTimeRangeChange={(r) => {
+                setTimeRange(r);
+                setPage(1);
+              }}
+              minMagnitude={minMagnitude}
+              onMinMagnitudeChange={(m) => {
+                setMinMagnitude(m);
+                setPage(1);
+              }}
+              searchRegion={searchRegion}
+              onSearchRegionChange={(s) => {
+                setSearchRegion(s);
+                setPage(1);
+              }}
+              onRefresh={loadDashboardData}
+              loading={loading}
+            />
 
-        {error && (
-          <ErrorState
-            title="Error de sincronización"
-            message={error}
-            onRetry={loadDashboardData}
-          />
+            {error && (
+              <ErrorState
+                title="Error de sincronización"
+                message={error}
+                onRetry={loadDashboardData}
+              />
+            )}
+
+            {/* Map & Live Visualizer with Swarms Layer */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  Cartografía Sísmica Georreferenciada (USGS) & Detección de Enjambres
+                </h2>
+                <span className="text-[11px] text-slate-500">
+                  {events.length} sismos mostrados en mapa
+                </span>
+              </div>
+              <SeismicMap events={events} anomalies={anomalies} />
+            </div>
+
+            {/* Recharts Analytics Charts */}
+            <AnalyticsCharts stats={stats} loading={loading} />
+
+            {/* Events Table */}
+            <EventsTable
+              events={events}
+              total={totalEvents}
+              page={page}
+              limit={10}
+              totalPages={totalPages}
+              onPageChange={setPage}
+              loading={loading}
+            />
+
+            {/* AI Executive Report View */}
+            <AiReportCard report={report} loading={loading} />
+
+            {/* Data Quality & Quarantine (RBAC) */}
+            <QualityPanel />
+          </>
         )}
-
-        {/* Map & Live Visualizer */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-              Cartografía Sísmica Georreferenciada (USGS)
-            </h2>
-            <span className="text-[11px] text-slate-500">
-              {events.length} sismos mostrados en mapa
-            </span>
-          </div>
-          <SeismicMap events={events} />
-        </div>
-
-        {/* Recharts Analytics Charts */}
-        <AnalyticsCharts stats={stats} loading={loading} />
-
-        {/* Events Table */}
-        <EventsTable
-          events={events}
-          total={totalEvents}
-          page={page}
-          limit={10}
-          totalPages={totalPages}
-          onPageChange={setPage}
-          loading={loading}
-        />
-
-        {/* AI Executive Report View */}
-        <AiReportCard report={report} loading={loading} />
-
-        {/* Data Quality & Quarantine (RBAC) */}
-        <QualityPanel />
       </main>
 
       {/* Footer */}

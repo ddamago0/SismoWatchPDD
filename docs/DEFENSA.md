@@ -21,6 +21,9 @@ Esta guía está redactada para que cualquier desarrollador pueda sustentar, jus
 13. [¿Cómo se calcula el algoritmo de detección de anomalías sísmicas (Z-score)?](#pregunta-13)
 14. [¿Qué auditorías de seguridad se realizaron y qué vulnerabilidades previenen?](#pregunta-14)
 15. [¿Cómo puede un jurado verificar el sistema completo de punta a punta en un solo comando?](#pregunta-15)
+16. [¿Cómo funciona la detección de enjambres sísmicos espaciales (Swarm Events) mediante clustering geodésico Haversine?](#pregunta-16)
+17. [¿Cómo opera la trazabilidad del linaje de datos de extremo a extremo (`/api/pipeline/lineage`) y cómo se audita la gobernanza?](#pregunta-17)
+18. [¿Cómo se diseñó la resiliencia en la conexión SSE con backoff exponencial para evitar caídas de visualización en vivo?](#pregunta-18)
 
 ---
 
@@ -272,5 +275,51 @@ Esta guía está redactada para que cualquier desarrollador pueda sustentar, jus
 > ```bash
 > pytest -v
 > ```
-> *Ejecutando 31 pruebas unitarias y de integración con 100% de éxito en menos de 1 segundo."*
+> *Ejecutando 35 pruebas unitarias y de integración con 100% de éxito en menos de 1 segundo."*
+
+---
+
+### Pregunta 16
+#### ¿Cómo funciona la detección de enjambres sísmicos espaciales (Swarm Events) mediante clustering geodésico Haversine?
+
+**Respuesta Técnica de Sustentación:**
+> *"La detección de anomalías por Z-score identifica incrementos de frecuencia por región administrativa, pero no detecta agrupamientos hiperlocales que cruzan fronteras o se concentran en una falla geológica específica.*
+>
+> *Para resolverlo, implementamos el algoritmo de **Clustering Espacio-Temporal Haversine** en `airflow/include/anomaly_detection.py`:*
+> 1. *Calcula la distancia geodésica exacta en la superficie terrestre entre pares de eventos utilizando la fórmula de Haversine con radio terrestre de 6,371 km.*
+> 2. *Agrupa en un enjambre sísmico (`SEISMIC_SWARM_EVENT`) cuando 3 o más eventos ocurren dentro de un radio geográfico de $\le 75\text{ km}$ en una ventana temporal reciente.*
+> 3. *Calcula el centroide geográfico, radio de dispersión y magnitud pico del cluster.*
+> 4. *Persiste las anomalías en la tabla especializada `curated.seismic_anomalies` y las expone en la API y el mapa Leaflet con anillos de dispersión y capas interactivas de alerta."*
+
+---
+
+### Pregunta 17
+#### ¿Cómo opera la trazabilidad del linaje de datos de extremo a extremo (`/api/pipeline/lineage`) y cómo se audita la gobernanza?
+
+**Respuesta Técnica de Sustentación:**
+> *"Siguiendo las mejores prácticas enterprise de linaje de datos y OpenLineage vistas en proyectos de gobernanza, SismoWatch expone su linaje completo a través del endpoint `/api/pipeline/lineage` y la pestaña 'Linaje & Auditoría' en el Frontend:*
+> 1. *Nodos y Políticas*: Mapea cada etapa desde los feeds de USGS hasta el dashboard, detallando políticas (`Append-Only JSONB` en Bronze, `Normalizado UTC ISO` en Silver, `Pandera Quality Gate` con sus 5 reglas, y `Gold Certificado`).
+> 2. *Ecuación de Conciliación Matemática*: Comprueba en tiempo real que:
+>    \[
+>    N_{\text{raw}} = N_{\text{curated}} + N_{\text{quarantine}} + N_{\text{duplicates}}
+>    \]
+>    demostrando que el 100% de los datos que ingresan al pipeline están contabilizados, clasificados o aislados con trazabilidad forense inmutable.
+> 3. *Columnas de Auditoría*: Las capas `staging` y `curated` incorporan metadatos de linaje: `_batch_id`, `_ingested_at`, `_processed_at` y `_quality_score`."*
+
+---
+
+### Pregunta 18
+#### ¿Cómo se diseñó la resiliencia en la conexión SSE con backoff exponencial para evitar caídas de visualización en vivo?
+
+**Respuesta Técnica de Sustentación:**
+> *"Las conexiones HTTP de larga duración (Server-Sent Events) pueden experimentar interrupciones transitorias debido a microcortes de red, balanceadores de carga o reinicios del backend.*
+>
+> *En `web/src/services/sse.ts`, implementamos una máquina de estados con reconexión reactiva:*
+> 1. *Estados explícitos*: La UI distingue entre `'connected'` (baliza verde 'SSE En Vivo'), `'reconnecting'` (baliza ámbar pulsante 'Reconectando...') y `'disconnected'` (baliza roja).*
+> 2. *Backoff Exponencial*: Ante una desconexión accidental, el cliente no satura el servidor con reintentos continuos, sino que aplica un retraso exponencial:
+>    \[
+>    \text{delay} = \min\left(1000 \times 1.5^{\text{retryCount}}, 30000\right)\text{ ms}
+>    \]
+> 3. *Restablecimiento automático*: Tan pronto como el backend responde o el socket se reabre, el contador de reintentos se reinicia a 0 y la baliza regresa a estado verde sin que el analista deba refrescar el navegador."*
+
 

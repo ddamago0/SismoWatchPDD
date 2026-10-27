@@ -5,6 +5,7 @@ import { ExternalLink, Waves, AlertTriangle } from 'lucide-react';
 
 interface SeismicMapProps {
   events: EarthquakeEvent[];
+  anomalies?: any[];
 }
 
 function getMagnitudeColor(mag: number): string {
@@ -19,10 +20,14 @@ function getMagnitudeRadius(mag: number): number {
   return Math.max(4, Math.min(22, mag * 3));
 }
 
-export const SeismicMap: React.FC<SeismicMapProps> = ({ events }) => {
-  // Center of map defaults to World center (0, 0) or average of events
+export const SeismicMap: React.FC<SeismicMapProps> = ({ events, anomalies = [] }) => {
+  const [showSwarms, setShowSwarms] = React.useState(true);
   const defaultCenter: [number, number] = [20, 0];
   const defaultZoom = 2;
+
+  const swarmAnomalies = anomalies.filter(
+    (a) => a.type === 'SEISMIC_SWARM_EVENT' && a.latitude != null && a.longitude != null
+  );
 
   return (
     <div className="relative w-full h-[450px] rounded-xl overflow-hidden border border-slate-800 bg-slate-950 shadow-md">
@@ -36,6 +41,38 @@ export const SeismicMap: React.FC<SeismicMapProps> = ({ events }) => {
           attribution='&copy; <a href="https://carto.com/">CARTO</a> | Data: USGS'
           url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
         />
+
+        {/* Swarm Events (Enjambres Sísmicos Espaciales) */}
+        {showSwarms &&
+          swarmAnomalies.map((swarm) => (
+            <CircleMarker
+              key={`swarm-${swarm.id || swarm.event_id}`}
+              center={[swarm.latitude, swarm.longitude]}
+              radius={Math.max(25, (swarm.radius_km || 10) * 0.8)}
+              pathOptions={{
+                color: '#a855f7',
+                fillColor: '#c084fc',
+                fillOpacity: 0.25,
+                weight: 2,
+                dashArray: '4, 4',
+              }}
+            >
+              <Popup className="sismowatch-popup">
+                <div className="p-1 min-w-[220px] text-slate-900">
+                  <div className="flex items-center gap-1.5 pb-1 mb-2 border-b border-purple-200 text-purple-700 font-bold text-xs uppercase tracking-wider">
+                    <span>⚡ Enjambre Sísmico (Swarm)</span>
+                  </div>
+                  <h4 className="font-bold text-xs text-slate-800 mb-1">{swarm.region}</h4>
+                  <p className="text-[11px] text-slate-600 mb-2">{swarm.explanation}</p>
+                  <div className="text-[10px] space-y-0.5 text-purple-900 font-semibold bg-purple-50 p-2 rounded border border-purple-100">
+                    <div>Cluster: {swarm.cluster_size} eventos agrupados</div>
+                    <div>Radio geodésico: {swarm.radius_km} km</div>
+                    <div>Magnitud pico: {swarm.max_magnitude} Mw</div>
+                  </div>
+                </div>
+              </Popup>
+            </CircleMarker>
+          ))}
 
         {events.map((evt) => {
           const color = getMagnitudeColor(evt.mag);
@@ -125,6 +162,19 @@ export const SeismicMap: React.FC<SeismicMapProps> = ({ events }) => {
             <span className="w-3 h-3 rounded-full bg-rose-500"></span>
             <span>≥ 6.0 (Alta Energía)</span>
           </div>
+          {swarmAnomalies.length > 0 && (
+            <div className="pt-1.5 mt-1 border-t border-slate-800">
+              <label className="flex items-center gap-1.5 cursor-pointer text-purple-300 font-semibold">
+                <input
+                  type="checkbox"
+                  checked={showSwarms}
+                  onChange={(e) => setShowSwarms(e.target.checked)}
+                  className="rounded border-purple-500 text-purple-600 focus:ring-0"
+                />
+                <span>Enjambres ({swarmAnomalies.length})</span>
+              </label>
+            </div>
+          )}
         </div>
       </div>
     </div>

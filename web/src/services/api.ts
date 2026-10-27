@@ -134,4 +134,20 @@ export const api = {
     if (!res.ok) throw new Error('Error al disparar pipeline en Airflow');
     return res.json();
   },
+
+  async getLineage(): Promise<any> {
+    const res = await fetch(`${API_BASE}/api/pipeline/lineage`, {
+      headers: { ...getAuthHeader() },
+    });
+    if (!res.ok) throw new Error('Error al obtener linaje de datos');
+    return res.json();
+  },
+
+  async getAnomalies(): Promise<any[]> {
+    const res = await fetch(`${API_BASE}/api/anomalies`, {
+      headers: { ...getAuthHeader() },
+    });
+    if (!res.ok) return [];
+    return res.json();
+  },
 };

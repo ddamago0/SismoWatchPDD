@@ -39,6 +39,89 @@ def calculate_z_scores(values: List[float]) -> List[float]:
     return [round(float(z), 2) for z in z_scores]
 
 
+def haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """Calcula la distancia geodésica en kilómetros entre dos coordenadas usando Haversine."""
+    r = 6371.0
+    d_lat = math.radians(lat2 - lat1)
+    d_lon = math.radians(lon2 - lon1)
+    a = (math.sin(d_lat / 2) ** 2 +
+         math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(d_lon / 2) ** 2)
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    return r * c
+
+
+def detect_seismic_swarms(
+    events: List[Dict[str, Any]],
+    max_radius_km: float = 75.0,
+    min_cluster_size: int = 3
+) -> List[Dict[str, Any]]:
+    """
+    Detecta enjambres sísmicos (Seismic Swarm Events) mediante agrupamiento
+    espacial basado en distancia geodésica Haversine.
+    """
+    if len(events) < min_cluster_size:
+        return []
+
+    valid_geo = [
+        e for e in events
+        if e.get("latitude") is not None and e.get("longitude") is not None
+    ]
+    if len(valid_geo) < min_cluster_size:
+        return []
+
+    visited = set()
+    clusters = []
+
+    for i, e1 in enumerate(valid_geo):
+        if i in visited:
+            continue
+        cluster = [e1]
+        visited.add(i)
+        lat1 = float(e1["latitude"])
+        lon1 = float(e1["longitude"])
+
+        for j, e2 in enumerate(valid_geo):
+            if j in visited:
+                continue
+            lat2 = float(e2["latitude"])
+            lon2 = float(e2["longitude"])
+            if haversine_km(lat1, lon1, lat2, lon2) <= max_radius_km:
+                cluster.append(e2)
+                visited.add(j)
+
+        if len(cluster) >= min_cluster_size:
+            clusters.append(cluster)
+
+    swarm_anomalies = []
+    for cl in clusters:
+        lats = [float(e["latitude"]) for e in cl]
+        lons = [float(e["longitude"]) for e in cl]
+        mags = [float(e.get("mag") or 0.0) for e in cl]
+        centroid_lat = sum(lats) / len(lats)
+        centroid_lon = sum(lons) / len(lons)
+        max_dist = max([haversine_km(centroid_lat, centroid_lon, la, lo) for la, lo in zip(lats, lons)])
+        max_mag = max(mags)
+        reg = extract_region(cl[0].get("place"))
+
+        swarm_anomalies.append({
+            "type": "SEISMIC_SWARM_EVENT",
+            "region": reg,
+            "event_id": cl[0].get("id"),
+            "cluster_size": len(cl),
+            "latitude": round(centroid_lat, 4),
+            "longitude": round(centroid_lon, 4),
+            "radius_km": round(max_dist, 1),
+            "max_magnitude": max_mag,
+            "severity": "HIGH" if max_mag >= 5.0 or len(cl) >= 5 else "MEDIUM",
+            "explanation": (
+                f"Enjambre sísmico (Swarm Event) detectado en '{reg}': {len(cl)} eventos concentrados "
+                f"en un radio de {round(max_dist, 1)} km (magnitud máxima: {max_mag})."
+            )
+        })
+
+    return swarm_anomalies
+
+
 def detect_seismic_anomalies(
     events: List[Dict[str, Any]],
     z_threshold: float = 2.0
@@ -46,8 +129,8 @@ def detect_seismic_anomalies(
     """
     Analiza eventos de las últimas 24 horas y detecta anomalías:
     1. Picos de volumen por región (Z-score > z_threshold)
-    2. Concentración temporal / enjambres sísmicos
-    3. Eventos de magnitud inusualmente alta (> 6.0)
+    2. Enjambres sísmicos espaciales (Swarm Events por proximidad Haversine)
+    3. Eventos de magnitud inusualmente alta (>= 6.0)
     Retorna una lista de alertas estructuradas con explicaciones claras.
     """
     if not events:
@@ -55,7 +138,7 @@ def detect_seismic_anomalies(
 
     anomalies = []
 
-    # 1. Agrupar por región
+    # 1. Agrupar por región y calcular Z-scores
     region_counts: Dict[str, int] = {}
     region_events: Dict[str, List[Dict[str, Any]]] = {}
 
@@ -66,7 +149,6 @@ def detect_seismic_anomalies(
             region_events[reg] = []
         region_events[reg].append(e)
 
-    # 2. Análisis Z-score sobre el conteo de eventos por región
     regions = list(region_counts.keys())
     counts = [float(region_counts[r]) for r in regions]
     z_scores = calculate_z_scores(counts)
@@ -86,6 +168,10 @@ def detect_seismic_anomalies(
                     f"en 24h (Z-score: +{z}σ sobre la media regional, magnitud máxima: {max_mag_in_reg})."
                 )
             })
+
+    # 2. Detección de Enjambres Sísmicos Espaciales (Swarm Clustering)
+    swarms = detect_seismic_swarms(events, max_radius_km=75.0, min_cluster_size=3)
+    anomalies.extend(swarms)
 
     # 3. Detección de sismos de magnitud significativa (>= 6.0)
     for e in events:
