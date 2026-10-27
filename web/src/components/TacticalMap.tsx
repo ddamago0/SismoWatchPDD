@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { EarthquakeEvent, SeismicAnomaly } from '../types';
-import { Layers, Eye } from 'lucide-react';
+import { Layers, Eye, Navigation } from 'lucide-react';
 
 interface TacticalMapProps {
   events: EarthquakeEvent[];
@@ -12,6 +12,15 @@ interface TacticalMapProps {
 }
 
 type MapLayerType = 'satellite' | 'dark' | 'streets';
+
+const REGIONAL_PRESETS = [
+  { id: 'global', name: 'Global', lat: 20.0, lng: 0.0, zoom: 2 },
+  { id: 'andes', name: 'Andes / LatAm', lat: -15.0, lng: -75.0, zoom: 4 },
+  { id: 'ringoffire', name: 'Cinturón Pacífico', lat: 10.0, lng: 165.0, zoom: 3 },
+  { id: 'japan', name: 'Japón / Asia', lat: 36.0, lng: 139.0, zoom: 5 },
+  { id: 'sanandreas', name: 'San Andrés / USA', lat: 36.5, lng: -120.0, zoom: 5 },
+  { id: 'mediterranean', name: 'Mediterráneo', lat: 37.0, lng: 20.0, zoom: 4 },
+];
 
 const MAP_TILES = {
   satellite: {
@@ -336,6 +345,22 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
           />
           <span className="text-[10px]">Placas</span>
         </label>
+      </div>
+
+      {/* Regional Camera Presets */}
+      <div className="absolute top-3 right-3 z-[20] hidden lg:flex items-center gap-1 bg-[#171211]/90 backdrop-blur-md px-2 py-1 rounded-lg border border-[#2c221f] text-[10px] font-mono shadow-sm">
+        <Navigation className="w-3 h-3 text-[#d5c4fb]" />
+        <span className="text-[#9b9baa] font-medium mr-0.5">Vuelo:</span>
+        {REGIONAL_PRESETS.map((p) => (
+          <button
+            key={p.id}
+            onClick={() => mapInstanceRef.current?.flyTo([p.lat, p.lng], p.zoom, { duration: 1.2 })}
+            className="px-1.5 py-0.5 rounded hover:bg-[#2c221f] text-[#d5c4fb] hover:text-white transition-colors cursor-pointer"
+            title={`Centrar mapa en ${p.name}`}
+          >
+            {p.name}
+          </button>
+        ))}
       </div>
 
       {/* Magnitude Legend Indicator */}
