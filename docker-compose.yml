@@ -27,6 +27,108 @@ services:
       timeout: 5s
       retries: 5
 
+  # ============================================================================
+  # 2. Inicializador de Apache Airflow (Migraciones de BD y Usuario Admin)
+  # ============================================================================
+  airflow-init:
+    image: sismowatch-airflow:latest
+    container_name: sismowatch-airflow-init
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment: &airflow-env
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/airflow_metadata
+      AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW__CORE__FERNET_KEY}
+      AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW__CORE__SECRET_KEY}
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+      AIRFLOW__CORE__LOAD_DEFAULT_CONNECTIONS: 'false'
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'false'
+      AIRFLOW__API__AUTH_BACKENDS: airflow.api.auth.backend.basic_auth
+      # Conectividad a la base de datos de negocio SismoWatch (Medallion)
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-sismowatch}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      INGEST_USER: ${INGEST_USER:-sismo_ingest}
+      INGEST_PASSWORD: ${INGEST_PASSWORD}
+      TRANSFORM_USER: ${TRANSFORM_USER:-sismo_transform}
+      TRANSFORM_PASSWORD: ${TRANSFORM_PASSWORD}
+      READ_USER: ${READ_USER:-sismo_reader}
+      READ_PASSWORD: ${READ_PASSWORD}
+      # Llaves y proveedores de IA
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.8-flash}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      GROQ_MODEL: ${GROQ_MODEL:-openai/gpt-oss-120b}
+      DEFAULT_AI_PROVIDER: ${DEFAULT_AI_PROVIDER:-gemini}
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        echo "🔄 Inicializando metadatos de Airflow..."
+        airflow db migrate
+        echo "👤 Creando usuario administrador de Airflow..."
+        airflow users create \
+          --username "${AIRFLOW_ADMIN_USER:-admin}" \
+          --password "${AIRFLOW_ADMIN_PASSWORD}" \
+          --firstname Admin \
+          --lastname SismoWatch \
+          --role Admin \
+          --email admin@sismowatch.internal || true
+        echo "✅ Airflow inicializado correctamente."
+
+  # ============================================================================
+  # 3. Apache Airflow Webserver (Interfaz de Gestión y API REST)
+  # ============================================================================
+  airflow-webserver:
+    image: sismowatch-airflow:latest
+    container_name: sismowatch-airflow-webserver
+    restart: unless-stopped
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+    environment: *airflow-env
+    ports:
+      - "${AIRFLOW_UI_PORT:-8080}:8080"
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags:ro
+      - ./airflow/include:/opt/airflow/include:ro
+    command: webserver
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail http://localhost:8080/health || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # ============================================================================
+  # 4. Apache Airflow Scheduler (Ejecutor Local de DAGs)
+  # ============================================================================
+  airflow-scheduler:
+    image: sismowatch-airflow:latest
+    container_name: sismowatch-airflow-scheduler
+    restart: unless-stopped
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+    environment: *airflow-env
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags:ro
+      - ./airflow/include:/opt/airflow/include:ro
+    command: scheduler
+    healthcheck:
+      test: ["CMD-SHELL", "airflow jobs check --job-type SchedulerJob --hostname \"$${HOSTNAME}\""]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
 volumes:
   pgdata:
     name: sismowatch_pgdata
