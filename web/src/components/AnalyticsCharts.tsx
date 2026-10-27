@@ -194,3 +194,4 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ stats, loading
     </div>
   );
 };
+

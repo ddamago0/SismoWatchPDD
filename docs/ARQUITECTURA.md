@@ -273,3 +273,4 @@ CREATE INDEX idx_quarantine_rule ON curated.quality_quarantine(rule_failed);
 ```
 - Consultas por rango temporal aprovechan el índice `idx_curated_time` en orden descendente directo.
 - Filtros espaciales y de magnitud aprovechan índices combinados sin escaneos secuenciales de tabla completa.
+

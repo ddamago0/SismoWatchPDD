@@ -124,3 +124,4 @@ export const LoginModal: React.FC = () => {
     </div>
   );
 };
+

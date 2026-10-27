@@ -130,3 +130,4 @@ export const SeismicMap: React.FC<SeismicMapProps> = ({ events }) => {
     </div>
   );
 };
+

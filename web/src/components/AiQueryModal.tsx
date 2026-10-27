@@ -181,3 +181,4 @@ export const AiQueryModal: React.FC<AiQueryModalProps> = ({ isOpen, onClose }) =
     </div>
   );
 };
+

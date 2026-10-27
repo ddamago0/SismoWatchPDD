@@ -53,3 +53,4 @@ fi
 echo "   ✅ Gitleaks completado -> docs/security/gitleaks_report.txt"
 
 echo "🎉 Auditoría de seguridad finalizada. Revisa docs/security/ para los reportes."
+

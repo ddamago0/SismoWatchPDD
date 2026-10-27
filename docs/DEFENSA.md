@@ -273,3 +273,4 @@ Esta guía está redactada para que cualquier desarrollador pueda sustentar, jus
 > pytest -v
 > ```
 > *Ejecutando 31 pruebas unitarias y de integración con 100% de éxito en menos de 1 segundo."*
+

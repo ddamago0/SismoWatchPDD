@@ -94,3 +94,4 @@ export const Navbar: React.FC<NavbarProps> = ({ isLive, onOpenAiQuery }) => {
     </header>
   );
 };
+

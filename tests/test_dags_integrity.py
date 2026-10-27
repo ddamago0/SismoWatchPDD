@@ -43,3 +43,4 @@ def test_dags_contain_airflow_definitions():
         content = dag_file.read_text(encoding="utf-8")
         assert "DAG(" in content or "@dag(" in content, f"{dag_file.name} no define un DAG de Airflow"
         assert "default_args" in content or "retries" in content
+

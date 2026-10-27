@@ -91,3 +91,4 @@ export const KpiCards: React.FC<KpiCardsProps> = ({ kpis, loading }) => {
     </div>
   );
 };
+

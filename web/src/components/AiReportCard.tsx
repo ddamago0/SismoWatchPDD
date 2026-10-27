@@ -129,3 +129,4 @@ export const AiReportCard: React.FC<AiReportCardProps> = ({ report, loading }) =
     </div>
   );
 };
+

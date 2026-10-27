@@ -94,3 +94,4 @@ export const FiltersBar: React.FC<FiltersBarProps> = ({
     </div>
   );
 };
+
