@@ -10,6 +10,8 @@ import { TsunamiBanner } from './components/TsunamiBanner';
 import { KpiCards } from './components/KpiCards';
 import { FiltersBar } from './components/FiltersBar';
 import { TacticalMap } from './components/TacticalMap';
+import { SeismicGlobe3D } from './components/SeismicGlobe3D';
+import { Globe2, Map } from 'lucide-react';
 import { LiveEventsFeed } from './components/LiveEventsFeed';
 import { AnalyticsCharts } from './components/AnalyticsCharts';
 import { EventsTable } from './components/EventsTable';
@@ -43,6 +45,7 @@ const MainApp: React.FC = () => {
 
   // UI State
   const [loading, setLoading] = useState(true);
+  const [cartographyMode, setCartographyMode] = useState<'3d' | '2d'>('3d');
 
   // Strict RBAC Navigation Guard: Viewer must NEVER stay on admin_audit
   useEffect(() => {
@@ -185,15 +188,58 @@ const MainApp: React.FC = () => {
               loading={loading}
             />
 
-            {/* Zona de Operaciones: Mapa Táctico (God's Eye Satélite) + Feed Reciente */}
+            {/* Selector de Cartografía: Globo 3D (Default) vs Mapa 2D Satelital */}
+            <div className="flex items-center justify-between bg-[#1b1514] border border-[#2d2421] p-2.5 px-4 rounded-xl text-xs shadow-sm">
+              <div className="flex items-center gap-2.5">
+                <span className="text-[#a8a29e] font-medium hidden sm:inline">Visualización Geoespacial:</span>
+                <div className="flex items-center bg-[#120e0d] p-0.5 rounded-lg border border-[#2d2421]">
+                  <button
+                    onClick={() => setCartographyMode('3d')}
+                    className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      cartographyMode === '3d'
+                        ? 'bg-[#844dea] text-white shadow-md'
+                        : 'text-[#a8a29e] hover:text-[#ececf1]'
+                    }`}
+                  >
+                    <Globe2 className="w-3.5 h-3.5" />
+                    <span>Globo 3D Táctico (WebGL)</span>
+                  </button>
+                  <button
+                    onClick={() => setCartographyMode('2d')}
+                    className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      cartographyMode === '2d'
+                        ? 'bg-[#844dea] text-white shadow-md'
+                        : 'text-[#a8a29e] hover:text-[#ececf1]'
+                    }`}
+                  >
+                    <Map className="w-3.5 h-3.5" />
+                    <span>Mapa 2D (Satélite Esri)</span>
+                  </button>
+                </div>
+              </div>
+              <span className="text-[11px] text-[#78716c] font-mono hidden md:inline">
+                {cartographyMode === '3d' ? '✦ Render 3D con ondas concéntricas y balizas láser' : '✦ Cartografía vectorial de precisión GIS'}
+              </span>
+            </div>
+
+            {/* Zona de Operaciones: Cartografía Táctica + Feed Reciente */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
               <div className="lg:col-span-7 w-full">
-                <TacticalMap
-                  events={events}
-                  anomalies={anomalies}
-                  selectedEvent={selectedEvent}
-                  onSelectEvent={setSelectedEvent}
-                />
+                {cartographyMode === '3d' ? (
+                  <SeismicGlobe3D
+                    events={events}
+                    anomalies={anomalies}
+                    selectedEvent={selectedEvent}
+                    onSelectEvent={setSelectedEvent}
+                  />
+                ) : (
+                  <TacticalMap
+                    events={events}
+                    anomalies={anomalies}
+                    selectedEvent={selectedEvent}
+                    onSelectEvent={setSelectedEvent}
+                  />
+                )}
               </div>
 
               <div className="lg:col-span-5 w-full">
