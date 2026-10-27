@@ -1,15 +1,11 @@
 import React from 'react';
 import {
   Activity,
-  LogIn,
   Layers,
   ShieldCheck,
   Compass,
   Sparkles,
-  Server,
   ArrowRight,
-  Database,
-  CheckCircle2,
 } from 'lucide-react';
 
 interface HomePageProps {
@@ -27,25 +23,12 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenLogin }) => {
               <Activity className="w-5 h-5 animate-pulse" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="font-extrabold text-lg text-white tracking-tight">SismoWatch</span>
-                <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full border border-slate-700 font-mono font-bold">
-                  v2.4
-                </span>
-              </div>
+              <span className="font-extrabold text-lg text-white tracking-tight">SismoWatch</span>
               <p className="text-[10px] text-slate-400 font-mono">
                 Consola de Inteligencia Sísmica & Medallion Lakehouse
               </p>
             </div>
           </div>
-
-          <button
-            onClick={onOpenLogin}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-lg shadow-blue-600/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
-          >
-            <LogIn className="w-4 h-4" />
-            <span>Iniciar Sesión</span>
-          </button>
         </div>
       </header>
 
@@ -55,11 +38,6 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenLogin }) => {
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[650px] h-[350px] bg-blue-900/15 rounded-full blur-[140px] pointer-events-none" />
 
         <div className="max-w-4xl mx-auto text-center relative z-10 space-y-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-700/80 text-xs font-mono text-slate-300">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>SuperApp &bull; Prueba de Desempeño Ruta IA & Automatización</span>
-          </div>
-
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.15]">
             Observabilidad Sísmica y Gobernanza Medallion
           </h1>
@@ -68,21 +46,14 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenLogin }) => {
             Plataforma de ingeniería de datos para ingestión continua USGS FDSN, validación de calidad determinística con Pandera, detección espacial de enjambres y boletines analíticos con IA verificada.
           </p>
 
-          <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
+          <div className="flex items-center justify-center pt-4">
             <button
               onClick={onOpenLogin}
-              className="px-6 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold shadow-xl shadow-blue-600/25 flex items-center gap-2.5 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="px-7 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold shadow-xl shadow-blue-600/25 flex items-center gap-2.5 transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
               <span>Acceder a la Consola</span>
               <ArrowRight className="w-4 h-4" />
             </button>
-
-            <a
-              href="#arquitectura"
-              className="px-5 py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700 text-sm font-medium transition-all"
-            >
-              Arquitectura del Sistema
-            </a>
           </div>
         </div>
       </section>
@@ -167,34 +138,10 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenLogin }) => {
         </div>
       </section>
 
-      {/* System Infrastructure Live Status */}
-      <section className="py-8 px-6 bg-[#070b14] border-t border-slate-800/80">
-        <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-4 text-xs font-mono text-slate-400">
-          <div className="flex items-center gap-6 flex-wrap">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-400" />
-              <span>PostgreSQL 16 (Medallion)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-400" />
-              <span>Apache Airflow 2.8.1 (Scheduler & DAGs)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-400" />
-              <span>FastAPI SSE Real-Time Stream</span>
-            </div>
-          </div>
-
-          <div>
-            <span>OWASP ASVS 4.0 &bull; JWT HS256 &bull; RBAC</span>
-          </div>
-        </div>
-      </section>
-
       {/* Footer */}
       <footer className="py-6 px-6 bg-[#05080f] border-t border-slate-800/80 text-center text-xs font-mono text-slate-400">
         <div>
-          SismoWatch &copy; 2026 &bull; SuperApp Prueba de Desempeño
+          SismoWatch &copy; 2026 &bull; Plataforma de Inteligencia Sísmica
         </div>
       </footer>
     </div>

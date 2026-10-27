@@ -38,12 +38,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <Activity className="w-5 h-5 animate-pulse" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <span className="font-extrabold text-base tracking-tight text-white">SismoWatch</span>
-              <span className="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold uppercase tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                v2.4
-              </span>
-            </div>
+            <span className="font-extrabold text-base tracking-tight text-white">SismoWatch</span>
             <p className="text-[10px] text-slate-400 font-mono hidden sm:block">
               Consola Operativa Medallion
             </p>
