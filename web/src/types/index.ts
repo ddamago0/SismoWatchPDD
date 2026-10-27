@@ -135,3 +135,17 @@ export interface SeismicAnomaly {
   explanation: string;
   detected_at: string;
 }
+
+export interface SuperAppHub {
+  id: string;
+  name: string;
+  city: string;
+  country: string;
+  latitude: number;
+  longitude: number;
+  activeCouriers: number;
+  status: 'OPERATIVO' | 'ALERTA_PRECAUCIÓN' | 'EVACUACIÓN_INMEDIATA';
+  nearestEventDistanceKm?: number;
+  triggerEventMag?: number;
+  triggerEventPlace?: string;
+}

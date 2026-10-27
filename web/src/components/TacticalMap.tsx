@@ -1,8 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { EarthquakeEvent, SeismicAnomaly } from '../types';
-import { Layers, Eye, Navigation } from 'lucide-react';
+import { Layers, Eye, Navigation, Building2, ShieldAlert } from 'lucide-react';
+import { EarthquakeEvent, SeismicAnomaly, SuperAppHub } from '../types';
+import { computeHubImpacts } from '../data/superAppHubs';
 
 interface TacticalMapProps {
   events: EarthquakeEvent[];
@@ -67,10 +68,21 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
   const swarmsLayerRef = useRef<L.LayerGroup | null>(null);
   const platesLayerRef = useRef<L.GeoJSON | null>(null);
+  const hubsLayerRef = useRef<L.LayerGroup | null>(null);
 
   const [currentLayer, setCurrentLayer] = useState<MapLayerType>('satellite');
   const [showSwarms, setShowSwarms] = useState(true);
   const [showPlates, setShowPlates] = useState(true);
+  const [showHubs, setShowHubs] = useState(true);
+
+  // Evaluación de impacto sísmico en Hubs Logísticos de SuperApp
+  const computedHubs = useMemo(() => {
+    return computeHubImpacts(events);
+  }, [events]);
+
+  const alertHubsCount = useMemo(() => {
+    return computedHubs.filter((h) => h.status !== 'OPERATIVO').length;
+  }, [computedHubs]);
 
   // Initialize Native Leaflet Map
   useEffect(() => {
@@ -94,6 +106,7 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
     baseLayerRef.current = initialTile;
     markersLayerRef.current = L.layerGroup().addTo(map);
     swarmsLayerRef.current = L.layerGroup().addTo(map);
+    hubsLayerRef.current = L.layerGroup().addTo(map);
     mapInstanceRef.current = map;
 
     const resizeTimer = setTimeout(() => {
@@ -265,6 +278,67 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
     });
   }, [events, onSelectEvent]);
 
+  // Render SuperApp Logistics Hubs
+  useEffect(() => {
+    if (!hubsLayerRef.current) return;
+    hubsLayerRef.current.clearLayers();
+
+    if (!showHubs) return;
+
+    computedHubs.forEach((hub) => {
+      const isEvac = hub.status === 'EVACUACIÓN_INMEDIATA';
+      const isWarn = hub.status === 'ALERTA_PRECAUCIÓN';
+      const bgColor = isEvac ? '#ef4444' : isWarn ? '#f59e0b' : '#0ea5e9';
+      const statusText = isEvac ? 'EVACUACIÓN INMEDIATA' : isWarn ? 'ALERTA PRECAUCIÓN' : 'OPERATIVO';
+
+      const customIcon = L.divIcon({
+        className: 'superapp-hub-div-icon',
+        html: `
+          <div style="
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            height: 26px;
+            border-radius: 6px;
+            background: ${bgColor};
+            border: 2px solid #ffffff;
+            box-shadow: 0 0 ${isEvac || isWarn ? '10px' : '4px'} ${bgColor};
+            font-size: 13px;
+            cursor: pointer;
+          " title="${hub.name}">
+            ${isEvac ? '🚨' : isWarn ? '⚠️' : '🏢'}
+          </div>
+        `,
+        iconSize: [26, 26],
+        iconAnchor: [13, 13],
+      });
+
+      const marker = L.marker([hub.latitude, hub.longitude], { icon: customIcon });
+
+      const popupHtml = `
+        <div style="font-family: inherit; color: #ececf1; padding: 4px; min-width: 230px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; margin-bottom: 6px;">
+            <span style="font-family: monospace; font-size: 10px; font-weight: 700; color: #38bdf8;">🏢 HUB SUPERAPP</span>
+            <span style="background: ${isEvac ? 'rgba(239,68,68,0.2)' : isWarn ? 'rgba(245,158,11,0.2)' : 'rgba(16,185,129,0.2)'}; color: ${bgColor}; border: 1px solid ${bgColor}; font-weight: 700; font-size: 9px; padding: 1px 5px; border-radius: 4px;">
+              ${statusText}
+            </span>
+          </div>
+          <div style="font-weight: 700; font-size: 12px; color: #ffffff; margin-bottom: 2px;">${hub.name}</div>
+          <div style="font-size: 11px; color: #9b9baa; margin-bottom: 6px;">${hub.city}, ${hub.country}</div>
+          <div style="background: rgba(22,17,16,0.7); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 6px; font-family: monospace; font-size: 10px; color: #ececf1; line-height: 1.5;">
+            <div>Flota Activa: <strong style="color: #38bdf8;">${hub.activeCouriers} mensajeros</strong></div>
+            <div>Sismo Cercano: <strong style="color: ${hub.nearestEventDistanceKm !== undefined && hub.nearestEventDistanceKm < 150 ? '#f59e0b' : '#9b9baa'};">${hub.nearestEventDistanceKm !== undefined ? `${hub.nearestEventDistanceKm} km` : 'Ninguno'}</strong></div>
+            ${hub.triggerEventMag ? `<div style="color: #f87171;">Activador: <strong>M ${hub.triggerEventMag.toFixed(1)}</strong> (${hub.triggerEventPlace || 'Epicentro'})</div>` : ''}
+          </div>
+        </div>
+      `;
+
+      marker.bindPopup(popupHtml, { className: 'sismowatch-custom-popup' });
+      hubsLayerRef.current?.addLayer(marker);
+    });
+  }, [computedHubs, showHubs]);
+
   // Fly to selected event
   useEffect(() => {
     if (!mapInstanceRef.current || !selectedEvent) return;
@@ -345,6 +419,19 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
           />
           <span className="text-[10px]">Placas</span>
         </label>
+
+        <div className="h-3 w-px bg-[#2c221f] mx-0.5" />
+
+        {/* Toggle SuperApp Hubs */}
+        <label className="flex items-center gap-1.5 text-[#38bdf8] cursor-pointer hover:text-white transition-colors">
+          <input
+            type="checkbox"
+            checked={showHubs}
+            onChange={(e) => setShowHubs(e.target.checked)}
+            className="w-3 h-3 accent-[#0284c7] rounded cursor-pointer"
+          />
+          <span className="text-[10px]">Hubs ({computedHubs.length})</span>
+        </label>
       </div>
 
       {/* Regional Camera Presets */}
@@ -362,6 +449,14 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
           </button>
         ))}
       </div>
+
+      {/* Hubs Risk Alert Notification Banner */}
+      {showHubs && alertHubsCount > 0 && (
+        <div className="absolute bottom-12 left-3 z-[20] flex items-center gap-1.5 bg-rose-500/20 border border-rose-500/40 text-rose-200 px-2.5 py-1 rounded-lg text-[10px] font-mono shadow-md backdrop-blur-md animate-pulse">
+          <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
+          <span>{alertHubsCount} Hub(s) SuperApp en radio de impacto</span>
+        </div>
+      )}
 
       {/* Magnitude Legend Indicator */}
       <div className="absolute bottom-3 right-3 z-[20] hidden sm:flex items-center gap-2.5 bg-[#171211]/90 backdrop-blur-md px-2.5 py-1 rounded-lg border border-[#2c221f] text-[10px] font-mono text-[#9b9baa]">
@@ -381,6 +476,11 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
         <div className="flex items-center gap-1">
           <span className="w-2 h-2 rounded-full bg-[#f87171]" />
           <span>&ge; 6.0</span>
+        </div>
+        <div className="h-2.5 w-px bg-[#2c221f] mx-0.5" />
+        <div className="flex items-center gap-1">
+          <span className="text-[10px]">🏢</span>
+          <span className="text-[#38bdf8]">Hubs</span>
         </div>
       </div>
 
