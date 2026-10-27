@@ -125,22 +125,24 @@ La API incorpora el endpoint `POST /api/ai/query` que permite a los analistas fo
 Para adjuntar las capturas requeridas en la entrega de Moodle:
 1. **Dashboard Principal (`http://localhost:3000`)**: Captura la vista con los 5 KPIs, mapa interactivo Leaflet con círculos de colores y gráficas de Recharts.
 2. **Panel de Cuarentena (Rol Admin)**: Ingresa con usuario `admin`, haz clic en la pestaña "Calidad y Cuarentena" y captura la tabla con el evento rechazado (`demo_quarantine_corrupt_lat`) y su regla violada (`GEOGRAPHIC_BOUNDS`).
-3. **Reporte Ejecutivo de IA**: En la pestaña "Reportes", captura el boletín narrativo estructurado generado por Gemini/Groq con el badge `Validación Anti-Alucinación Aprobada`.
+3. **Reporte Ejecutivo de IA y Exportación Imprimible**: En la pestaña "Reportes", captura el boletín narrativo estructurado con el badge `Validación Anti-Alucinación Aprobada` y el botón de exportación oficial PDF/HTML.
 4. **Airflow Webserver (`http://localhost:8080`)**: Ingresa con usuario `airflow` y captura la vista de DAGs con los 4 flujos en verde (`dag_ingesta_usgs`, `dag_transformacion_calidad`, `dag_backfill_historico`, `dag_reporte_ia_anomalias`).
+5. **Panel de Linaje & Auditoría (`http://localhost:3000`)**: Haz clic en el botón superior "Linaje & Auditoría" para mostrar el grafo reactivo de 11 nodos y la verificación formal de la Ecuación de Conciliación Matemática ($N_{\text{raw}} = N_{\text{curated}} + N_{\text{quarantine}} + N_{\text{duplicates}}$), así como la capa de Enjambres Sísmicos geodésicos en el mapa.
 
 ---
 
 ## ⚠️ Limitaciones Conocidas y Mejoras Futuras
 
-1. **Ingesta Batch vs Streaming Puro**: Actualmente la ingesta corre cada 5 minutos mediante Airflow. En un entorno enterprise de alta escala, se implementaría Apache Kafka con Kafka Connect para consumir el WebSocket directo de USGS y procesar eventos con Apache Flink en subsegundos.
-2. **Lakehouse Distribuido**: Para procesar volúmenes masivos de datos históricos a nivel de terabytes/petabytes, las capas Bronze y Silver migrarían de PostgreSQL a almacenamiento de objetos (MinIO / S3) en formato Apache Parquet sobre Apache Iceberg o Delta Lake.
-3. **Catálogo de Metadatos y Linaje Dinámico**: Implementación de OpenLineage conectado a OpenMetadata para visualizar el linaje interactivo de extremo a extremo desde el endpoint de USGS hasta las columnas del dashboard.
+1. **Ingesta Batch vs Streaming Puro**: Actualmente la ingesta corre cada 5 minutos mediante Airflow. En un entorno enterprise de ultra-alta concurrencia, se implementaría Apache Kafka con Kafka Connect para consumir el WebSocket directo de USGS y procesar eventos con Apache Flink en subsegundos.
+2. **Lakehouse Distribuido**: Para procesar volúmenes masivos de datos históricos a nivel de terabytes/petabytes, las capas Bronze y Silver migrarían de PostgreSQL a almacenamiento de objetos S3/GCS en formato Apache Parquet sobre Apache Iceberg o Delta Lake.
+3. **Estándares OpenLineage Enterprise**: La plataforma ya incluye linaje end-to-end integrado nativamente en `/api/pipeline/lineage` y visualizado en React; como evolución futura se puede emitir eventos bajo el estándar OpenLineage hacia Marquez u OpenMetadata.
 
 ---
 
 ## 📚 Documentación de Sustentación
 
 - [docs/ARQUITECTURA.md](docs/ARQUITECTURA.md): Especificación técnica exhaustiva, diagramas Mermaid, esquema de roles PostgreSQL y diseño de resiliencia.
-- [docs/DEFENSA.md](docs/DEFENSA.md): **Guía con 15 preguntas y respuestas técnicas** para la defensa de la prueba ante comités evaluadores.
+- [docs/DEFENSA.md](docs/DEFENSA.md): **Guía con 18 preguntas y respuestas técnicas** para la defensa de la prueba ante comités evaluadores.
 - [docs/REQUISITOS_PDD.md](docs/REQUISITOS_PDD.md): Requisitos de negocio originales y matriz de criterios de aceptación.
+- [docs/security/](docs/security/): Informes de auditoría de seguridad automatizada (Bandit SAST, Pip-audit CVEs y Gitleaks Secret Detection).
 - [CHANGELOG.md](CHANGELOG.md): Registro cronológico y trazabilidad de todas las fases implementadas.
