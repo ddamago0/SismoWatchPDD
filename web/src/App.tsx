@@ -11,7 +11,7 @@ import { KpiCards } from './components/KpiCards';
 import { FiltersBar } from './components/FiltersBar';
 import { TacticalMap } from './components/TacticalMap';
 import { SeismicGlobe3D } from './components/SeismicGlobe3D';
-import { Globe2, Map } from 'lucide-react';
+import { Globe2, Map, Bot, Sparkles } from 'lucide-react';
 import { LiveEventsFeed } from './components/LiveEventsFeed';
 import { AnalyticsCharts } from './components/AnalyticsCharts';
 import { EventsTable } from './components/EventsTable';
@@ -309,6 +309,30 @@ const MainApp: React.FC = () => {
           </div>
         )}
       </main>
+
+      {/* Floating Action Button Bubble (Pregúntale a SismoBot) */}
+      {!isAiDrawerOpen && (
+        <div className="fixed bottom-6 right-6 z-40 flex items-center gap-3 animate-in fade-in duration-200">
+          <button
+            onClick={() => setIsAiDrawerOpen(true)}
+            className="hidden sm:flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#1a1413]/95 backdrop-blur-md border border-[#2d2421] text-xs font-semibold text-[#ececf1] shadow-xl hover:shadow-2xl hover:border-[#844dea]/60 hover:text-[#d5c4fb] transition-all cursor-pointer group"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-[#844dea] group-hover:rotate-12 transition-transform" />
+            <span>Pregúntale a SismoBot</span>
+          </button>
+
+          <button
+            onClick={() => setIsAiDrawerOpen(true)}
+            aria-label="Abrir asistente SismoBot"
+            className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-xl bg-gradient-to-tr from-[#6b35d6] via-[#844dea] to-[#a855f7] text-white shadow-[#844dea]/30 hover:shadow-[#844dea]/50 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer border border-[#c084fc]/30 group"
+          >
+            <div className="relative">
+              <Bot className="w-6 h-6 group-hover:scale-110 transition-transform" />
+              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-[#86efac] border-2 border-[#120e0d] animate-pulse" />
+            </div>
+          </button>
+        </div>
+      )}
 
       {/* Lateral Slide-Over Drawer: Asistente IA (Text-to-SQL + AST Guard) */}
       <AiChatDrawer
