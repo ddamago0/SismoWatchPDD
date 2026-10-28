@@ -111,42 +111,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           )}
         </nav>
 
-        {/* Right Tools & User Profile */}
+        {/* User Profile & Logout */}
         <div className="flex items-center gap-2">
-          {/* Subtle Connection Status Dot */}
-          <div
-            title={
-              connectionStatus === 'connected'
-                ? 'Flujo continuo en línea'
-                : connectionStatus === 'reconnecting'
-                ? 'Reconectando...'
-                : 'Desconectado'
-            }
-            className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-[#171211] border border-[#261f1c] text-[10px] font-mono text-[#9b9baa]"
-          >
-            <span
-              className={`w-1.5 h-1.5 rounded-full ${
-                connectionStatus === 'connected'
-                  ? 'bg-[#86efac] animate-pulse'
-                  : connectionStatus === 'reconnecting'
-                  ? 'bg-[#fcd34d] animate-ping'
-                  : 'bg-[#f87171]'
-              }`}
-            />
-            <span className="hidden lg:inline">
-              {connectionStatus === 'connected' ? 'En línea' : 'Reconectando'}
-            </span>
-          </div>
-
-          {/* AI Drawer Action Button */}
-          <button
-            onClick={onOpenAiDrawer}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#241a2e] hover:bg-[#322340] text-[#d5c4fb] border border-[#4a365f]/50 text-xs font-mono font-medium transition-all duration-150"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-[#d5c4fb]" />
-            <span className="hidden sm:inline">SismoBot</span>
-          </button>
-
           {/* Role Profile Badge */}
           {user && (
             <div className="flex items-center gap-2 pl-2 border-l border-[#241c19]">

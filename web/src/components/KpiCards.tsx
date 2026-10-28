@@ -89,7 +89,7 @@ export const KpiCards: React.FC<KpiCardsProps> = ({ kpis, loading }) => {
         return (
           <div
             key={idx}
-            className="p-3.5 bg-[#171211] rounded-xl border border-[#241c19] hover:border-[#3d312c] transition-all duration-200 shadow-sm relative overflow-hidden"
+            className="p-3.5 bg-[#171211] rounded-xl border border-[#241c19] hover:border-[#3d312c] transition-all duration-200 shadow-sm relative overflow-hidden flex flex-col justify-between h-full min-h-[96px]"
           >
             <div className="flex items-center justify-between mb-1.5">
               <span className="text-[10px] font-mono font-medium text-[#9b9baa] uppercase tracking-wider">

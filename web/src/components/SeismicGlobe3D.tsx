@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import Globe, { GlobeMethods } from 'react-globe.gl';
-import { Waves, Compass, RotateCcw, Radio, Sparkles, Layers, Navigation, Building2, ShieldAlert } from 'lucide-react';
+import { Waves, Compass, RotateCcw, Radio, Sparkles, Layers, Navigation, Building2, ShieldAlert, ChevronDown, ChevronUp, X } from 'lucide-react';
 import { EarthquakeEvent, SeismicAnomaly, SuperAppHub } from '../types';
 import { computeHubImpacts } from '../data/superAppHubs';
 
@@ -197,6 +197,7 @@ export const SeismicGlobe3D: React.FC<SeismicGlobe3DProps> = ({
   const [showBeacons, setShowBeacons] = useState<boolean>(false);
   const [showPlates, setShowPlates] = useState<boolean>(true);
   const [showHubs, setShowHubs] = useState<boolean>(true);
+  const [showLegend, setShowLegend] = useState<boolean>(false);
   const [platesGeoJson, setPlatesGeoJson] = useState<any>(null);
 
   // Evaluación de impacto sísmico en Hubs Logísticos de SuperApp
@@ -437,7 +438,7 @@ export const SeismicGlobe3D: React.FC<SeismicGlobe3DProps> = ({
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-[560px] rounded-xl overflow-hidden bg-slate-950 border border-[#2d2421] shadow-2xl select-none"
+      className="relative w-full h-[540px] rounded-xl overflow-hidden bg-slate-950 border border-[#2d2421] shadow-2xl select-none"
     >
       {/* Fondo cósmico animado con estrellas fugaces */}
       <CosmicStarfield width={dimensions.width} height={dimensions.height} />
@@ -615,43 +616,70 @@ export const SeismicGlobe3D: React.FC<SeismicGlobe3DProps> = ({
         </div>
       )}
 
-      {/* Cockpit HUD: Leyenda de Intensidades y Magnitudes */}
-      <div className="absolute bottom-4 left-4 z-20 bg-slate-900/90 backdrop-blur border border-slate-800 rounded-xl p-3 text-xs shadow-2xl space-y-2 pointer-events-auto">
-        <div className="flex items-center gap-1.5 font-semibold text-slate-200 border-b border-slate-800 pb-1.5">
-          <Waves className="w-4 h-4 text-cyan-400" />
-          <span>Intensidad Sísmica & Logística SuperApp (3D)</span>
-        </div>
-        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#ff0055] shadow-sm shadow-[#ff0055]/50"></span>
-            <span className="text-slate-300">M ≥ 5.0 (Crítico)</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#ff9900] shadow-sm shadow-[#ff9900]/50"></span>
-            <span className="text-slate-300">M 4.0 - 4.9</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#00ff66] shadow-sm shadow-[#00ff66]/50"></span>
-            <span className="text-slate-300">M 2.5 - 3.9</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#00d4ff] shadow-sm shadow-[#00d4ff]/50"></span>
-            <span className="text-slate-300">M &lt; 2.5</span>
-          </div>
-        </div>
-        <div className="flex flex-col gap-1 pt-1.5 border-t border-slate-800 text-[10px]">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5">
-              <span className="w-3 h-0.5 bg-[#f59e0b] rounded-full inline-block"></span>
-              <span className="text-amber-300/90 font-mono">Fallas Tectónicas (PB2002)</span>
+      {/* Cockpit HUD: Botón Desplegable de Leyenda */}
+      <div className="absolute bottom-4 left-4 z-20 pointer-events-auto flex flex-col items-start gap-1.5">
+        {showLegend && (
+          <div className="bg-slate-900/95 backdrop-blur-md border border-slate-700/80 rounded-xl p-3 text-xs shadow-2xl space-y-2 max-w-[280px] animate-in fade-in slide-in-from-bottom-2 duration-150">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+              <div className="flex items-center gap-1.5 font-semibold text-slate-200">
+                <Waves className="w-3.5 h-3.5 text-cyan-400" />
+                <span className="text-[11px]">Intensidad Sísmica & Logística</span>
+              </div>
+              <button
+                onClick={() => setShowLegend(false)}
+                className="text-slate-400 hover:text-white p-0.5 rounded cursor-pointer"
+                title="Cerrar leyenda"
+              >
+                <X className="w-3 h-3" />
+              </button>
             </div>
-            <span className="text-slate-500 font-mono">◎ Clic focaliza</span>
+            <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[10px] font-mono">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-[#ff0055] shadow-xs shadow-[#ff0055]/50"></span>
+                <span className="text-slate-300">M ≥ 5.0 (Crítico)</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-[#ff9900] shadow-xs shadow-[#ff9900]/50"></span>
+                <span className="text-slate-300">M 4.0 - 4.9</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-[#00ff66] shadow-xs shadow-[#00ff66]/50"></span>
+                <span className="text-slate-300">M 2.5 - 3.9</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-[#00d4ff] shadow-xs shadow-[#00d4ff]/50"></span>
+                <span className="text-slate-300">M &lt; 2.5</span>
+              </div>
+            </div>
+            <div className="flex flex-col gap-1 pt-1.5 border-t border-slate-800 text-[9px] font-mono">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-0.5 bg-[#f59e0b] rounded-full inline-block"></span>
+                  <span className="text-amber-300/90">Fallas Tectónicas</span>
+                </div>
+                <span className="text-slate-500">◎ Clic focaliza</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px]">🏢</span>
+                <span className="text-sky-300/90">Hubs SuperApp (10)</span>
+              </div>
+            </div>
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className="text-[11px]">🏢</span>
-            <span className="text-sky-300/90 font-mono">Hubs SuperApp (Dark Stores & Fulfilment)</span>
-          </div>
-        </div>
+        )}
+
+        <button
+          onClick={() => setShowLegend(!showLegend)}
+          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border backdrop-blur-md text-xs font-mono font-medium shadow-lg transition-all cursor-pointer ${
+            showLegend
+              ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40'
+              : 'bg-slate-900/80 text-slate-300 border-slate-700/80 hover:bg-slate-800 hover:text-white'
+          }`}
+          title="Ver/Ocultar simbología y leyenda"
+        >
+          <Waves className="w-3.5 h-3.5 text-cyan-400" />
+          <span>Leyenda</span>
+          {showLegend ? <ChevronDown className="w-3 h-3 text-slate-400" /> : <ChevronUp className="w-3 h-3 text-slate-400" />}
+        </button>
       </div>
     </div>
   );
