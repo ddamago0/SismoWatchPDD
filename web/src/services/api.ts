@@ -125,8 +125,14 @@ export const api = {
     return request<StatsResponse>(`/api/stats?hours=${hours}`);
   },
 
-  async getLatestReport(): Promise<AiReport> {
-    return request<AiReport>('/api/reports/latest');
+  async getLatestReport(window: string = '24h'): Promise<AiReport> {
+    return request<AiReport>(`/api/reports/latest?window=${window}`);
+  },
+
+  async regenerateReport(): Promise<{ message: string; details: any }> {
+    return request<{ message: string; details: any }>('/api/admin/reports/regenerate', {
+      method: 'POST',
+    });
   },
 
   async exportReport(format: 'csv' | 'html'): Promise<void> {

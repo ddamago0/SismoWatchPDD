@@ -108,6 +108,21 @@ export interface QuarantineRecord {
   failed_at: string;
 }
 
+export interface DeclarativeChartDataset {
+  label: string;
+  data: number[];
+  backgroundColor?: string[];
+  borderColor?: string;
+  borderWidth?: number;
+}
+
+export interface DeclarativeChart {
+  type: 'bar' | 'line' | 'doughnut' | 'pie' | 'none';
+  title: string;
+  labels: string[];
+  datasets: DeclarativeChartDataset[];
+}
+
 export interface SqlQueryResult {
   sender?: string;
   reply?: string;
@@ -121,6 +136,7 @@ export interface SqlQueryResult {
   latency_ms?: number;
   suggested_questions?: string[];
   context_used?: any;
+  chart?: DeclarativeChart;
 }
 
 export interface SeismicAnomaly {
