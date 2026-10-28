@@ -689,7 +689,7 @@ export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({ isOpen, onClose }) =
       const errorMessage: ChatMessage = {
         id: `bot-err-${Date.now()}`,
         sender: 'bot',
-        text: `⚠️ **Error en la consulta**: ${err.message || 'No fue posible completar la petición con el asistente.'}`,
+        text: `**Error en la consulta**: ${err.message || 'No fue posible completar la petición con el asistente.'}`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         provider_used: 'Sistema de Seguridad',
         status: 'error',

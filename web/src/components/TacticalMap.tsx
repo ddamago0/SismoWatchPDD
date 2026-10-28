@@ -287,7 +287,7 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
           <div style="font-family: monospace; font-size: 10px; color: #9b9baa; line-height: 1.5; background: rgba(22,17,16,0.6); padding: 5px; border-radius: 6px;">
             <div>Profundidad: <strong style="color: #f7f7f9;">${evt.depth_km != null ? evt.depth_km.toFixed(1) : '—'} km</strong></div>
             <div>Coordenadas: <strong style="color: #f7f7f9;">${evt.latitude.toFixed(2)}, ${evt.longitude.toFixed(2)}</strong></div>
-            ${evt.tsunami === 1 ? '<div style="color: #f87171; font-weight: 700; margin-top: 2px;">⚠️ ALERTA TSUNAMI ACTIVA</div>' : ''}
+            ${evt.tsunami === 1 ? '<div style="color: #f87171; font-weight: 700; margin-top: 2px;">ALERTA TSUNAMI ACTIVA</div>' : ''}
           </div>
         </div>
       `;
@@ -322,20 +322,23 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 26px;
-            height: 26px;
+            width: 22px;
+            height: 22px;
             border-radius: 6px;
             background: ${bgColor};
-            border: 2px solid #ffffff;
-            box-shadow: 0 0 ${isEvac || isWarn ? '10px' : '4px'} ${bgColor};
-            font-size: 13px;
+            border: 1.5px solid #ffffff;
+            box-shadow: 0 0 ${isEvac || isWarn ? '8px' : '3px'} ${bgColor};
+            font-size: 8px;
+            font-family: monospace;
+            font-weight: 800;
+            color: #ffffff;
             cursor: pointer;
           " title="${hub.name}">
-            ${isEvac ? '🚨' : isWarn ? '⚠️' : '🏢'}
+            ${isEvac ? 'EVAC' : isWarn ? 'WARN' : 'HUB'}
           </div>
         `,
-        iconSize: [26, 26],
-        iconAnchor: [13, 13],
+        iconSize: [22, 22],
+        iconAnchor: [11, 11],
       });
 
       const marker = L.marker([hub.latitude, hub.longitude], { icon: customIcon });
@@ -343,7 +346,7 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
       const popupHtml = `
         <div style="font-family: inherit; color: #ececf1; padding: 4px; min-width: 230px;">
           <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; margin-bottom: 6px;">
-            <span style="font-family: monospace; font-size: 10px; font-weight: 700; color: #38bdf8;">🏢 HUB SUPERAPP</span>
+            <span style="font-family: monospace; font-size: 10px; font-weight: 700; color: #38bdf8;">HUB SUPERAPP</span>
             <span style="background: ${isEvac ? 'rgba(239,68,68,0.2)' : isWarn ? 'rgba(245,158,11,0.2)' : 'rgba(16,185,129,0.2)'}; color: ${bgColor}; border: 1px solid ${bgColor}; font-weight: 700; font-size: 9px; padding: 1px 5px; border-radius: 4px;">
               ${statusText}
             </span>
@@ -556,7 +559,7 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
             </div>
             <div className="flex items-center justify-between pt-1.5 border-t border-slate-800 text-[9px] font-mono text-slate-400">
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px]">🏢</span>
+                <span className="w-2 h-2 rounded bg-sky-400"></span>
                 <span className="text-sky-300/90">Hubs SuperApp</span>
               </div>
               <span>{events.length} Eventos</span>

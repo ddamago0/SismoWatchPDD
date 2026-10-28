@@ -414,7 +414,7 @@ export const SeismicGlobe3D: React.FC<SeismicGlobe3DProps> = ({
         </div>
         ${
           ev.tsunami === 1
-            ? '<div style="margin-top: 6px; background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #fca5a5; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; text-align: center;">⚠️ ALERTA DE TSUNAMI EMITIDA</div>'
+            ? '<div style="margin-top: 6px; background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #fca5a5; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; text-align: center;">ALERTA DE TSUNAMI EMITIDA</div>'
             : ''
         }
       </div>
@@ -432,7 +432,7 @@ export const SeismicGlobe3D: React.FC<SeismicGlobe3DProps> = ({
     return `
       <div style="background: rgba(15, 23, 42, 0.96); border: 1px solid ${statusBorder}; border-radius: 8px; padding: 12px 14px; font-family: sans-serif; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.6); min-width: 250px; color: #f8fafc;">
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 6px; margin-bottom: 8px;">
-          <span style="font-family: monospace; font-size: 11px; font-weight: bold; color: #38bdf8;">🏢 HUB SUPERAPP</span>
+          <span style="font-family: monospace; font-size: 11px; font-weight: bold; color: #38bdf8;">HUB SUPERAPP</span>
           <span style="background: ${statusBg}; border: 1px solid ${statusBorder}; color: ${statusColor}; font-weight: 800; font-size: 10px; padding: 2px 6px; border-radius: 4px;">
             ${statusText}
           </span>
@@ -440,12 +440,12 @@ export const SeismicGlobe3D: React.FC<SeismicGlobe3DProps> = ({
         <div style="font-size: 13px; font-weight: 700; color: #ffffff; margin-bottom: 2px;">${hub.name}</div>
         <div style="font-size: 11px; color: #94a3b8; margin-bottom: 8px;">${hub.city}, ${hub.country}</div>
         <div style="font-size: 11px; color: #cbd5e1; display: grid; grid-template-columns: 1fr; gap: 4px; background: rgba(30, 41, 59, 0.5); padding: 6px 8px; border-radius: 6px;">
-          <div>🛵 Flota Activa: <b style="color: #38bdf8;">${hub.activeCouriers} mensajeros</b></div>
-          <div>📍 Sismo más cercano: <b style="color: ${hub.nearestEventDistanceKm !== undefined && hub.nearestEventDistanceKm < 150 ? '#f59e0b' : '#94a3b8'};">${hub.nearestEventDistanceKm !== undefined ? `${hub.nearestEventDistanceKm} km` : 'Sin sismos cercanos'}</b></div>
-          ${hub.triggerEventMag ? `<div style="color: #f87171;">⚠️ Activado por: <b>M ${hub.triggerEventMag.toFixed(1)}</b> · ${hub.triggerEventPlace || 'Epicentro'}</div>` : ''}
+          <div>Flota Activa: <b style="color: #38bdf8;">${hub.activeCouriers} mensajeros</b></div>
+          <div>Sismo más cercano: <b style="color: ${hub.nearestEventDistanceKm !== undefined && hub.nearestEventDistanceKm < 150 ? '#f59e0b' : '#94a3b8'};">${hub.nearestEventDistanceKm !== undefined ? `${hub.nearestEventDistanceKm} km` : 'Sin sismos cercanos'}</b></div>
+          ${hub.triggerEventMag ? `<div style="color: #f87171;">Activado por: <b>M ${hub.triggerEventMag.toFixed(1)}</b> · ${hub.triggerEventPlace || 'Epicentro'}</div>` : ''}
         </div>
         <div style="margin-top: 8px; font-size: 10px; color: #94a3b8; font-style: italic;">
-          ${isEvac ? '🚨 Protocolo: Suspender asignación de órdenes y evacuar personal.' : isWarn ? '⚠️ Protocolo: Notificar a repartidores en ruta y verificar inventario.' : '✅ Operación regular sin riesgos geofísicos inminentes.'}
+          ${isEvac ? 'Protocolo: Suspender asignación de órdenes y evacuar personal.' : isWarn ? 'Protocolo: Notificar a repartidores en ruta y verificar inventario.' : 'Operación regular sin riesgos geofísicos inminentes.'}
         </div>
       </div>
     `;
@@ -509,7 +509,7 @@ export const SeismicGlobe3D: React.FC<SeismicGlobe3DProps> = ({
         labelsData={showHubs ? computedHubs : []}
         labelLat={(d: any) => d.latitude}
         labelLng={(d: any) => d.longitude}
-        labelText={(d: any) => `${d.status === 'EVACUACIÓN_INMEDIATA' ? '🚨' : d.status === 'ALERTA_PRECAUCIÓN' ? '⚠️' : '🏢'} ${d.city}`}
+        labelText={(d: any) => `${d.city}`}
         labelSize={1.15}
         labelDotRadius={(d: any) => (d.status === 'EVACUACIÓN_INMEDIATA' ? 0.7 : 0.4)}
         labelColor={(d: any) =>
@@ -701,7 +701,7 @@ export const SeismicGlobe3D: React.FC<SeismicGlobe3DProps> = ({
                 <span className="text-slate-500">◎ Clic focaliza</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px]">🏢</span>
+                <span className="w-2 h-2 rounded bg-sky-400"></span>
                 <span className="text-sky-300/90">Hubs SuperApp</span>
               </div>
             </div>
