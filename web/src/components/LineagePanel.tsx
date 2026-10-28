@@ -25,7 +25,7 @@ const FALLBACK_LINEAGE_NODES: LineageNode[] = [
     name: 'USGS Real-Time Feed',
     layer: 'source',
     category: 'Fuente Externa',
-    description: 'Feed GeoJSON all_hour.geojson (ingesta cada 5 min por Airflow)',
+    description: 'Feed GeoJSON all_hour.geojson • Ingesta cada 5 min por Airflow',
     protocol: 'HTTPS REST / GeoJSON',
     status: 'ONLINE',
   },
@@ -33,7 +33,7 @@ const FALLBACK_LINEAGE_NODES: LineageNode[] = [
     id: 'bronze_raw',
     name: 'raw.usgs_earthquakes_raw',
     layer: 'bronze',
-    category: 'Bronze (Crudo)',
+    category: 'Bronze • Crudo',
     description: 'Payload GeoJSON crudo en formato JSONB con timestamp de ingesta',
     policy: 'ON CONFLICT (id) DO UPDATE',
     status: 'HEALTHY',
@@ -43,7 +43,7 @@ const FALLBACK_LINEAGE_NODES: LineageNode[] = [
     id: 'silver_staging',
     name: 'staging.earthquakes_staging',
     layer: 'silver',
-    category: 'Silver (Normalizado)',
+    category: 'Silver • Normalizado',
     description: 'Aplanado tabular, coordenadas numéricas y marcas temporales UTC',
     status: 'HEALTHY',
     records: 19,
@@ -53,7 +53,7 @@ const FALLBACK_LINEAGE_NODES: LineageNode[] = [
     name: 'Pandera Quality Gate',
     layer: 'quality',
     category: 'Quality Gate Bloqueante',
-    description: 'Validación estricta de coordenadas [-90,90], [-180,180], magnitud y frescura',
+    description: 'Validación estricta de coordenadas en rangos globales, magnitud y frescura',
     status: 'ACTIVE',
     records: 19,
   },
@@ -70,7 +70,7 @@ const FALLBACK_LINEAGE_NODES: LineageNode[] = [
     id: 'gold_curated',
     name: 'curated.earthquakes_curated',
     layer: 'gold',
-    category: 'Gold (Certificado)',
+    category: 'Gold • Certificado',
     description: 'Hechos sísmicos 100% verificados, indexados y particionados',
     policy: 'ON CONFLICT (id) DO UPDATE',
     status: 'CERTIFIED',
@@ -81,7 +81,7 @@ const FALLBACK_LINEAGE_NODES: LineageNode[] = [
     name: 'curated.seismic_anomalies',
     layer: 'analytics',
     category: 'Analítica Espacio-Temporal',
-    description: 'Clustering geodésico Haversine (swarms >= 3 en radio <= 75 km) y Z-score',
+    description: 'Clustering geodésico Haversine • Enjambres con 3 o más eventos en radio de 75 km y Z-score',
     status: 'HEALTHY',
     records: 1,
   },
@@ -90,7 +90,7 @@ const FALLBACK_LINEAGE_NODES: LineageNode[] = [
     name: 'curated.ai_reports',
     layer: 'analytics',
     category: 'Reportes Ejecutivos IA',
-    description: 'Resumen narrativo con Gemini/Groq y validador numérico anti-alucinación',
+    description: 'Resumen narrativo con Gemini y Groq con validador numérico anti-alucinación',
     status: 'HEALTHY',
     records: 4,
   },
@@ -167,7 +167,7 @@ export const LineagePanel: React.FC = () => {
 
         {/* Ecuación de Conciliación Matemática */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="p-3.5 bg-[#120e0d] rounded-xl border border-[#241c19]">
+          <div className="p-3.5 bg-[#120e0d] rounded-xl border border-[#241c19] flex flex-col justify-between h-full min-h-[96px]">
             <span className="text-[10px] font-mono font-medium uppercase tracking-wider text-[#9b9baa]">
               Ecuación de Conciliación
             </span>
@@ -177,9 +177,9 @@ export const LineagePanel: React.FC = () => {
             <div className="text-[10px] text-[#9b9baa] mt-0.5">Tolerancia cero a pérdida de datos</div>
           </div>
 
-          <div className="p-3.5 bg-[#120e0d] rounded-xl border border-[#241c19]">
+          <div className="p-3.5 bg-[#120e0d] rounded-xl border border-[#241c19] flex flex-col justify-between h-full min-h-[96px]">
             <span className="text-[10px] font-mono font-medium uppercase tracking-wider text-[#9b9baa]">
-              Capa Gold (Certificados)
+              Capa Gold • Certificados
             </span>
             <div className="text-xl font-mono font-bold text-[#86efac] mt-1">
               {reconciliation.total_curated ?? 17} sismos
@@ -187,7 +187,7 @@ export const LineagePanel: React.FC = () => {
             <div className="text-[10px] text-[#9b9baa] mt-0.5">Disponibles para consulta en la API</div>
           </div>
 
-          <div className="p-3.5 bg-[#120e0d] rounded-xl border border-[#241c19]">
+          <div className="p-3.5 bg-[#120e0d] rounded-xl border border-[#241c19] flex flex-col justify-between h-full min-h-[96px]">
             <span className="text-[10px] font-mono font-medium uppercase tracking-wider text-[#9b9baa]">
               Aislados en Cuarentena
             </span>
@@ -197,7 +197,7 @@ export const LineagePanel: React.FC = () => {
             <div className="text-[10px] text-[#9b9baa] mt-0.5">Rechazados por Pandera Guard</div>
           </div>
 
-          <div className="p-3.5 bg-[#120e0d] rounded-xl border border-[#241c19]">
+          <div className="p-3.5 bg-[#120e0d] rounded-xl border border-[#241c19] flex flex-col justify-between h-full min-h-[96px]">
             <span className="text-[10px] font-mono font-medium uppercase tracking-wider text-[#9b9baa]">
               Índice de Calidad
             </span>
@@ -215,7 +215,7 @@ export const LineagePanel: React.FC = () => {
         <div className="lg:col-span-8 bg-[#171211] p-5 rounded-2xl border border-[#261f1c] space-y-4">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-xs font-mono font-semibold text-[#f7f7f9] uppercase tracking-wider">
-              Flujo Dirigido de Transformación y Enrutamiento (DAG Medallion)
+              Flujo Dirigido de Transformación y Enrutamiento &bull; DAG Medallion
             </h3>
             <span className="text-[10px] font-mono text-[#9b9baa]">Haz clic en un nodo para auditar</span>
           </div>
@@ -234,24 +234,26 @@ export const LineagePanel: React.FC = () => {
                 <div
                   key={node.id}
                   onClick={() => setSelectedNode(node)}
-                  className={`p-3.5 rounded-xl border cursor-pointer transition-all duration-150 ${
+                  className={`p-3.5 rounded-xl border cursor-pointer transition-all duration-150 flex flex-col justify-between h-full min-h-[140px] ${
                     isSelected
                       ? 'bg-[#241a2e] border-[#844dea]'
                       : 'bg-[#120e0d] hover:bg-[#1a1413] border-[#241c19] hover:border-[#332b27]'
                   }`}
                 >
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-medium uppercase border ${badgeColor}`}>
-                      {node.category}
-                    </span>
-                    <span className="text-[10px] font-mono text-[#86efac] font-medium flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#86efac] animate-pulse" />
-                      {node.status}
-                    </span>
-                  </div>
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-medium uppercase border ${badgeColor}`}>
+                        {node.category}
+                      </span>
+                      <span className="text-[10px] font-mono text-[#86efac] font-medium flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#86efac] animate-pulse" />
+                        {node.status}
+                      </span>
+                    </div>
 
-                  <h4 className="text-xs font-mono font-semibold text-[#f7f7f9] truncate mb-1">{node.name}</h4>
-                  <p className="text-[11px] text-[#9b9baa] line-clamp-2 leading-relaxed">{node.description}</p>
+                    <h4 className="text-xs font-mono font-semibold text-[#f7f7f9] truncate mb-1">{node.name}</h4>
+                    <p className="text-[11px] text-[#9b9baa] line-clamp-2 leading-relaxed">{node.description}</p>
+                  </div>
 
                   {node.records !== undefined && (
                     <div className="mt-2.5 pt-2 border-t border-[#241c19] flex items-center justify-between text-[10px] font-mono text-[#9b9baa]">

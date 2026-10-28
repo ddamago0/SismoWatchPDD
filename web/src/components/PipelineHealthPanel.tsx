@@ -119,7 +119,7 @@ export const PipelineHealthPanel: React.FC<PipelineHealthPanelProps> = ({ kpis }
       technicalDetails: {
         storageOrEngine: 'PostgreSQL 16 / curated.earthquakes_curated',
         throughput: 'Consultas de baja latencia < 15ms con índices B-Tree',
-        governanceRule: 'Etiquetado no destructivo (ADR 0011: Pure Lineage)',
+        governanceRule: 'Etiquetado no destructivo • ADR 0011: Pure Lineage',
         idempotency: 'ON CONFLICT (id) DO UPDATE garantizando unicidad',
       },
     },
@@ -144,7 +144,7 @@ export const PipelineHealthPanel: React.FC<PipelineHealthPanelProps> = ({ kpis }
       name: 'Dual Engine AI SismoBot',
       type: 'AI_INFERENCE',
       layer: 'Intelligence',
-      format: 'Text-to-SQL + Chart (ADR 0008)',
+      format: 'Text-to-SQL + Chart • ADR 0008',
       icon: Cpu,
       color: 'from-[#ec4899] to-[#844dea]',
       description: 'Motor Groq LLaMA 3.3 + Gemini con AST Guard, OWASP compliance y Protocolo Gráfico Declarativo.',
@@ -161,7 +161,7 @@ export const PipelineHealthPanel: React.FC<PipelineHealthPanelProps> = ({ kpis }
     <div className="space-y-6">
       {/* Overview KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-5 bg-[#171211] border border-[#261f1c] rounded-2xl">
+        <div className="p-4 bg-[#171211] border border-[#261f1c] rounded-2xl flex flex-col justify-between h-full min-h-[110px]">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[10px] font-mono uppercase tracking-wider text-[#9b9baa] font-semibold">
               Salud del Ingestor USGS
@@ -174,10 +174,10 @@ export const PipelineHealthPanel: React.FC<PipelineHealthPanelProps> = ({ kpis }
           </p>
         </div>
 
-        <div className="p-5 bg-[#171211] border border-[#261f1c] rounded-2xl">
+        <div className="p-4 bg-[#171211] border border-[#261f1c] rounded-2xl flex flex-col justify-between h-full min-h-[110px]">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[10px] font-mono uppercase tracking-wider text-[#9b9baa] font-semibold">
-              Score Calidad Q (ISO 25012)
+              Score Calidad Q • ISO 25012
             </span>
             <ShieldCheck className="w-4 h-4 text-[#86efac]" />
           </div>
@@ -187,7 +187,7 @@ export const PipelineHealthPanel: React.FC<PipelineHealthPanelProps> = ({ kpis }
           </p>
         </div>
 
-        <div className="p-5 bg-[#171211] border border-[#261f1c] rounded-2xl">
+        <div className="p-4 bg-[#171211] border border-[#261f1c] rounded-2xl flex flex-col justify-between h-full min-h-[110px]">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[10px] font-mono uppercase tracking-wider text-[#9b9baa] font-semibold">
               Tasa de Fidelidad
@@ -200,7 +200,7 @@ export const PipelineHealthPanel: React.FC<PipelineHealthPanelProps> = ({ kpis }
           </p>
         </div>
 
-        <div className="p-5 bg-[#171211] border border-[#261f1c] rounded-2xl">
+        <div className="p-4 bg-[#171211] border border-[#261f1c] rounded-2xl flex flex-col justify-between h-full min-h-[110px]">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[10px] font-mono uppercase tracking-wider text-[#9b9baa] font-semibold">
               Última Sincronización
@@ -223,7 +223,7 @@ export const PipelineHealthPanel: React.FC<PipelineHealthPanelProps> = ({ kpis }
             </div>
             <div>
               <h3 className="text-xs font-mono font-semibold text-[#f7f7f9] uppercase tracking-wider">
-                Matriz de Calidad Pandera &bull; ISO/IEC 25012 (7 Reglas Canónicas)
+                Matriz de Calidad Pandera &bull; ISO/IEC 25012 &bull; 7 Reglas Canónicas
               </h3>
               <p className="text-[11px] text-[#9b9baa] font-mono">
                 Validación determinística sobre el esquema Silver antes de la promoción analítica a Gold
@@ -288,10 +288,10 @@ export const PipelineHealthPanel: React.FC<PipelineHealthPanelProps> = ({ kpis }
             </div>
             <div>
               <h3 className="text-xs font-mono font-semibold text-[#f7f7f9] uppercase tracking-wider">
-                Linaje Puro y Trazabilidad Extremo a Extremo (OpenMetadata Standard)
+                Linaje Puro y Trazabilidad Extremo a Extremo &bull; Estándar OpenMetadata
               </h3>
               <p className="text-[11px] text-[#9b9baa] font-mono">
-                Flujo del Lakehouse sin segregación destructiva ni pérdida de datos (ADR 0011)
+                Flujo del Lakehouse sin segregación destructiva ni pérdida de datos &bull; ADR 0011
               </p>
             </div>
           </div>
@@ -339,7 +339,10 @@ export const PipelineHealthPanel: React.FC<PipelineHealthPanelProps> = ({ kpis }
 
                 <div className="mt-3 pt-2 border-t border-[#241c19] flex items-center justify-between text-[9px] font-mono text-[#78716c]">
                   <span>{node.format}</span>
-                  <span className="text-[#86efac]">✓ Activo</span>
+                  <span className="text-[#86efac] flex items-center gap-1">
+                    <CheckCircle className="w-2.5 h-2.5" />
+                    <span>Activo</span>
+                  </span>
                 </div>
               </div>
             );
@@ -397,7 +400,7 @@ export const PipelineHealthPanel: React.FC<PipelineHealthPanelProps> = ({ kpis }
             </div>
             <div>
               <h3 className="text-xs font-mono font-semibold text-[#f7f7f9] uppercase tracking-wider">
-                Gobernanza de Linaje Puro e Invariante de Preservación Total (ADR 0011)
+                Gobernanza de Linaje Puro e Invariante de Preservación Total &bull; ADR 0011
               </h3>
               <p className="text-[11px] text-[#9b9baa] font-mono">
                 Arquitectura Medallón sin tablas intermedias huérfanas ni segregación destructiva de eventos
@@ -445,7 +448,7 @@ export const PipelineHealthPanel: React.FC<PipelineHealthPanelProps> = ({ kpis }
               <strong className="text-[#ececf1]">Idempotencia en Serving Layer &bull; ADR 0007:</strong> Las actualizaciones de USGS se resuelven mediante <code className="text-[#d5c4fb] bg-[#241c19] px-1 py-0.5 rounded">ON CONFLICT (id) DO UPDATE</code>, manteniendo una única fuente de verdad en <code className="text-[#86efac] bg-[#241c19] px-1 py-0.5 rounded">curated.earthquakes_curated</code>.
             </li>
             <li>
-              <strong className="text-[#ececf1]">Protocolo Gráfico Declarativo &bull; ADR 0008:</strong> El asistente SismoBot entrega especificaciones JSON estructuradas `{'{ type, labels, datasets }'}` que el frontend renderiza en SVG nativo, garantizando 0% de fallas en cliente y 100% de seguridad OWASP.
+              <strong className="text-[#ececf1]">Protocolo Gráfico Declarativo &bull; ADR 0008:</strong> El asistente SismoBot entrega especificaciones JSON estructuradas que el frontend renderiza en SVG nativo, garantizando 0% de fallas en cliente y 100% de seguridad OWASP.
             </li>
           </ul>
         </div>
