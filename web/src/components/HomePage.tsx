@@ -29,13 +29,6 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenLogin }) => {
               </p>
             </div>
           </div>
-
-          <button
-            onClick={onOpenLogin}
-            className="px-4 py-1.5 rounded-lg bg-[#844dea] hover:bg-[#9f73f2] text-white text-xs font-medium shadow-sm transition-all duration-200"
-          >
-            Acceder
-          </button>
         </div>
       </header>
 
