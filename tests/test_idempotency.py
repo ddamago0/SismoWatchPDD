@@ -15,8 +15,8 @@ sys.path.insert(0, str(repo_root / "api"))
 from src.config import settings
 
 DB_CONFIG = {
-    "host": os.getenv("POSTGRES_HOST_LOCAL", "127.0.0.1"),
-    "port": settings.POSTGRES_PORT,
+    "host": os.getenv("POSTGRES_HOST", "postgres" if os.path.exists("/.dockerenv") else "127.0.0.1"),
+    "port": int(os.getenv("POSTGRES_PORT", str(settings.POSTGRES_PORT))),
     "dbname": settings.POSTGRES_DB,
     "user": settings.POSTGRES_USER,
     "password": settings.POSTGRES_PASSWORD,
