@@ -144,6 +144,8 @@ services:
       - "${API_PORT:-8000}:8000"
     volumes:
       - ./api/src:/app/src:ro
+      - ./tests:/app/tests:ro
+      - ./airflow:/app/airflow:ro
     environment:
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432

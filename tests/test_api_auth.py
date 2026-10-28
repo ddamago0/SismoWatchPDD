@@ -59,48 +59,51 @@ def test_sql_guard_ast_dml_blocked():
             validate_read_only_sql(q)
 
 
+from fastapi.testclient import TestClient
+from src.main import app
+
+client = TestClient(app)
+
+
 def test_api_anonymous_request_rejected():
     """Endpoint protegido sin token debe retornar HTTP 401 Unauthorized."""
-    with httpx.Client(base_url=API_BASE) as client:
-        res = client.get("/api/kpis")
-        assert res.status_code == 401
+    res = client.get("/api/kpis")
+    assert res.status_code == 401
 
 
 def test_api_rbac_quarantine_forbidden_for_viewer():
     """Rol viewer debe recibir estrictamente HTTP 403 Forbidden al intentar acceder a cuarentena."""
-    with httpx.Client(base_url=API_BASE) as client:
-        # 1. Login como viewer
-        login_res = client.post(
-            "/auth/login",
-            json={"username": settings.VIEWER_USER, "password": settings.VIEWER_PASSWORD}
-        )
-        assert login_res.status_code == 200
-        viewer_token = login_res.json()["access_token"]
+    # 1. Login como viewer
+    login_res = client.post(
+        "/auth/login",
+        json={"username": settings.VIEWER_USER, "password": settings.VIEWER_PASSWORD}
+    )
+    assert login_res.status_code == 200
+    viewer_token = login_res.json()["access_token"]
 
-        # 2. Intentar ver cuarentena
-        quarantine_res = client.get(
-            "/api/quality/quarantine",
-            headers={"Authorization": f"Bearer {viewer_token}"}
-        )
-        assert quarantine_res.status_code == 403
-        assert "Acceso denegado" in quarantine_res.json()["detail"]
+    # 2. Intentar ver cuarentena
+    quarantine_res = client.get(
+        "/api/quality/quarantine",
+        headers={"Authorization": f"Bearer {viewer_token}"}
+    )
+    assert quarantine_res.status_code == 403
+    assert "Acceso denegado" in quarantine_res.json()["detail"]
 
 
 def test_api_rbac_quarantine_allowed_for_admin():
     """Rol admin debe recibir HTTP 200 OK y listar sismos en cuarentena."""
-    with httpx.Client(base_url=API_BASE) as client:
-        # 1. Login como admin
-        login_res = client.post(
-            "/auth/login",
-            json={"username": settings.ADMIN_USER, "password": settings.ADMIN_PASSWORD}
-        )
-        assert login_res.status_code == 200
-        admin_token = login_res.json()["access_token"]
+    # 1. Login como admin
+    login_res = client.post(
+        "/auth/login",
+        json={"username": settings.ADMIN_USER, "password": settings.ADMIN_PASSWORD}
+    )
+    assert login_res.status_code == 200
+    admin_token = login_res.json()["access_token"]
 
-        # 2. Consultar cuarentena
-        quarantine_res = client.get(
-            "/api/quality/quarantine",
-            headers={"Authorization": f"Bearer {admin_token}"}
-        )
-        assert quarantine_res.status_code == 200
-        assert isinstance(quarantine_res.json(), list)
+    # 2. Consultar cuarentena
+    quarantine_res = client.get(
+        "/api/quality/quarantine",
+        headers={"Authorization": f"Bearer {admin_token}"}
+    )
+    assert quarantine_res.status_code == 200
+    assert isinstance(quarantine_res.json(), list)

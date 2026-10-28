@@ -13,3 +13,4 @@ pandas>=2.1.0
 sqlparse>=0.4.4
 httpx>=0.26.0
 pytest>=8.0.0
+pandera>=0.18.0
