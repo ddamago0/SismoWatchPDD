@@ -79,7 +79,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenLogin }) => {
                 </div>
                 <h3 className="text-xs font-semibold text-[#f7f7f9] mb-1.5">Arquitectura Medallion</h3>
                 <p className="text-[11px] text-[#9b9baa] leading-relaxed">
-                  Segregación en esquemas Bronze (<code className="text-[#dedee6]">raw</code>), Silver (<code className="text-[#dedee6]">staging</code>) y Gold (<code className="text-[#dedee6]">curated</code>) con RBAC estricto.
+                  Segregación en esquemas Bronze <code className="text-[#dedee6]">raw</code>, Silver <code className="text-[#dedee6]">staging</code> y Gold <code className="text-[#dedee6]">curated</code> con RBAC estricto.
                 </p>
               </div>
               <div className="mt-3 pt-2.5 border-t border-[#261f1c] text-[10px] font-mono text-[#d5c4fb]">

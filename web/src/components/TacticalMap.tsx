@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Layers, Eye, Navigation, Building2, ShieldAlert } from 'lucide-react';
+import { Layers, Navigation, Building2, ShieldAlert, Radio, Waves, X, ChevronDown, ChevronUp, RotateCcw } from 'lucide-react';
 import { EarthquakeEvent, SeismicAnomaly, SuperAppHub } from '../types';
 import { computeHubImpacts } from '../data/superAppHubs';
 
@@ -37,7 +37,7 @@ const MAP_TILES = {
     attribution: 'Tiles &copy; Esri &mdash; Esri DeLorme',
   },
   streets: {
-    name: 'Calles (OSM)',
+    name: 'Calles',
     url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
     maxZoom: 19,
     attribution: '&copy; OpenStreetMap contributors',
@@ -74,6 +74,30 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
   const [showSwarms, setShowSwarms] = useState(true);
   const [showPlates, setShowPlates] = useState(true);
   const [showHubs, setShowHubs] = useState(true);
+  const [showFlightDropdown, setShowFlightDropdown] = useState(false);
+  const [selectedPresetId, setSelectedPresetId] = useState('global');
+  const [showLegend, setShowLegend] = useState(false);
+
+  // Cierre de dropdown al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const container = document.getElementById('map2d-flight-dropdown-container');
+      if (container && !container.contains(event.target as Node)) {
+        setShowFlightDropdown(false);
+      }
+    };
+    if (showFlightDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showFlightDropdown]);
+
+  const resetView = () => {
+    setSelectedPresetId('global');
+    mapInstanceRef.current?.flyTo([20.0, 0.0], 2, { duration: 1.2 });
+  };
 
   // Evaluación de impacto sísmico en Hubs Logísticos de SuperApp
   const computedHubs = useMemo(() => {
@@ -329,7 +353,7 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
           <div style="background: rgba(22,17,16,0.7); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 6px; font-family: monospace; font-size: 10px; color: #ececf1; line-height: 1.5;">
             <div>Flota Activa: <strong style="color: #38bdf8;">${hub.activeCouriers} mensajeros</strong></div>
             <div>Sismo Cercano: <strong style="color: ${hub.nearestEventDistanceKm !== undefined && hub.nearestEventDistanceKm < 150 ? '#f59e0b' : '#9b9baa'};">${hub.nearestEventDistanceKm !== undefined ? `${hub.nearestEventDistanceKm} km` : 'Ninguno'}</strong></div>
-            ${hub.triggerEventMag ? `<div style="color: #f87171;">Activador: <strong>M ${hub.triggerEventMag.toFixed(1)}</strong> (${hub.triggerEventPlace || 'Epicentro'})</div>` : ''}
+            ${hub.triggerEventMag ? `<div style="color: #f87171;">Activador: <strong>M ${hub.triggerEventMag.toFixed(1)}</strong> · ${hub.triggerEventPlace || 'Epicentro'}</div>` : ''}
           </div>
         </div>
       `;
@@ -351,137 +375,208 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
 
   return (
     <div className="relative w-full h-[540px] rounded-xl overflow-hidden border border-[#241c19] bg-[#120e0d] shadow-sm flex flex-col">
-      {/* Top Map Tactical HUD Toolbar */}
-      <div className="absolute top-3 left-3 z-[20] flex items-center gap-2 bg-[#171211]/90 backdrop-blur-md px-2.5 py-1.5 rounded-lg border border-[#2c221f] shadow-sm font-mono text-[11px]">
-        <div className="flex items-center gap-1.5 text-[#f7f7f9]">
-          <Eye className="w-3.5 h-3.5 text-[#d5c4fb]" />
-          <span className="font-medium">Cartografía ({events.length})</span>
+      {/* Cockpit HUD: Controles Superiores Compactos (Solo Iconos + Desplegable de Vuelo) */}
+      <div className="absolute top-3 left-3 right-3 z-[500] flex items-center justify-between pointer-events-none">
+        <div className="flex items-center gap-2 pointer-events-auto">
+          {/* Selector de Capa Base: Satélite / Oscuro / Calles */}
+          <div className="flex items-center gap-0.5 bg-slate-900/90 backdrop-blur-md p-1 rounded-xl border border-slate-800 shadow-xl font-mono text-[11px]">
+            <button
+              onClick={() => setCurrentLayer('satellite')}
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                currentLayer === 'satellite'
+                  ? 'bg-[#844dea] text-white shadow-xs font-semibold'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+              }`}
+              title="Capa base: Satélite"
+            >
+              Satélite
+            </button>
+            <button
+              onClick={() => setCurrentLayer('dark')}
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                currentLayer === 'dark'
+                  ? 'bg-[#844dea] text-white shadow-xs font-semibold'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+              }`}
+              title="Capa base: Lienzo Oscuro"
+            >
+              Oscuro
+            </button>
+            <button
+              onClick={() => setCurrentLayer('streets')}
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                currentLayer === 'streets'
+                  ? 'bg-[#844dea] text-white shadow-xs font-semibold'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+              }`}
+              title="Capa base: Calles"
+            >
+              Calles
+            </button>
+          </div>
+
+          {/* Grupo de Iconos de Herramientas Tácticas */}
+          <div className="flex items-center gap-1 bg-slate-900/90 backdrop-blur-md p-1 rounded-xl border border-slate-800 shadow-xl">
+            <button
+              onClick={() => setShowSwarms(!showSwarms)}
+              className={`p-2 rounded-lg border backdrop-blur text-xs transition-all cursor-pointer ${
+                showSwarms
+                  ? 'bg-purple-500/20 text-purple-300 border-purple-500/40 shadow-xs shadow-purple-500/20'
+                  : 'bg-slate-900/60 text-slate-400 border-transparent hover:text-white hover:bg-slate-800'
+              }`}
+              title={`Enjambres Sísmicos: ${showSwarms ? 'Visibles' : 'Ocultos'}`}
+            >
+              <Radio className={`w-3.5 h-3.5 ${showSwarms ? 'animate-pulse text-purple-300' : ''}`} />
+            </button>
+
+            <button
+              onClick={() => setShowPlates(!showPlates)}
+              className={`p-2 rounded-lg border backdrop-blur text-xs transition-all cursor-pointer ${
+                showPlates
+                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-xs shadow-amber-500/20'
+                  : 'bg-slate-900/60 text-slate-400 border-transparent hover:text-white hover:bg-slate-800'
+              }`}
+              title={`Fallas y Placas Tectónicas: ${showPlates ? 'Visibles' : 'Ocultas'}`}
+            >
+              <Layers className="w-3.5 h-3.5" />
+            </button>
+
+            <button
+              onClick={() => setShowHubs(!showHubs)}
+              className={`p-2 rounded-lg border backdrop-blur text-xs transition-all cursor-pointer ${
+                showHubs
+                  ? alertHubsCount > 0
+                    ? 'bg-rose-500/20 text-rose-300 border-rose-500/40 animate-pulse'
+                    : 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 shadow-xs shadow-cyan-500/20'
+                  : 'bg-slate-900/60 text-slate-400 border-transparent hover:text-white hover:bg-slate-800'
+              }`}
+              title={`Hubs SuperApp: ${showHubs ? 'Visibles' : 'Ocultos'}`}
+            >
+              <Building2 className="w-3.5 h-3.5" />
+            </button>
+
+            <div className="w-px h-4 bg-slate-800 mx-0.5" />
+
+            <button
+              onClick={resetView}
+              className="p-2 rounded-lg border border-transparent hover:border-slate-700 bg-slate-900/60 hover:bg-slate-800 text-slate-400 hover:text-white text-xs transition-all cursor-pointer"
+              title="Restablecer posición inicial del mapa"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* Menú Desplegable de Vuelo Táctico */}
+          <div id="map2d-flight-dropdown-container" className="relative">
+            <button
+              onClick={() => setShowFlightDropdown(!showFlightDropdown)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border backdrop-blur-md text-xs font-mono font-medium shadow-xl transition-all cursor-pointer ${
+                showFlightDropdown
+                  ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40'
+                  : 'bg-slate-900/90 text-slate-300 border-slate-800 hover:border-slate-700 hover:bg-slate-800 hover:text-white'
+              }`}
+              title="Seleccionar preset de vuelo táctico"
+            >
+              <Navigation className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Vuelo: {REGIONAL_PRESETS.find((p) => p.id === selectedPresetId)?.name || 'Global'}</span>
+              <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform ${showFlightDropdown ? 'rotate-180 text-cyan-400' : ''}`} />
+            </button>
+
+            {showFlightDropdown && (
+              <div className="absolute top-full left-0 mt-1.5 w-44 bg-slate-900/95 backdrop-blur-md border border-slate-700/80 rounded-xl p-1 shadow-2xl z-30 font-mono text-xs space-y-0.5 animate-in fade-in slide-in-from-top-1 duration-150">
+                {REGIONAL_PRESETS.map((p) => {
+                  const isSelected = p.id === selectedPresetId;
+                  return (
+                    <button
+                      key={p.id}
+                      onClick={() => {
+                        setSelectedPresetId(p.id);
+                        mapInstanceRef.current?.flyTo([p.lat, p.lng], p.zoom, { duration: 1.2 });
+                        setShowFlightDropdown(false);
+                      }}
+                      className={`w-full text-left px-2.5 py-1.5 rounded-lg transition-colors flex items-center justify-between cursor-pointer ${
+                        isSelected
+                          ? 'bg-cyan-500/20 text-cyan-300 font-semibold'
+                          : 'text-slate-300 hover:text-white hover:bg-slate-800/80'
+                      }`}
+                    >
+                      <span>{p.name}</span>
+                      {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
-
-        <div className="h-3 w-px bg-[#2c221f] mx-0.5" />
-
-        {/* Toggle Layer */}
-        <div className="flex items-center gap-0.5 bg-[#120e0d] p-0.5 rounded-md border border-[#201917]">
-          <button
-            onClick={() => setCurrentLayer('satellite')}
-            className={`px-2 py-0.5 rounded text-[10px] font-medium transition-all ${
-              currentLayer === 'satellite'
-                ? 'bg-[#844dea] text-white shadow-xs'
-                : 'text-[#9b9baa] hover:text-[#f7f7f9]'
-            }`}
-          >
-            Satélite
-          </button>
-          <button
-            onClick={() => setCurrentLayer('dark')}
-            className={`px-2 py-0.5 rounded text-[10px] font-medium transition-all ${
-              currentLayer === 'dark'
-                ? 'bg-[#844dea] text-white shadow-xs'
-                : 'text-[#9b9baa] hover:text-[#f7f7f9]'
-            }`}
-          >
-            Oscuro
-          </button>
-          <button
-            onClick={() => setCurrentLayer('streets')}
-            className={`px-2 py-0.5 rounded text-[10px] font-medium transition-all ${
-              currentLayer === 'streets'
-                ? 'bg-[#844dea] text-white shadow-xs'
-                : 'text-[#9b9baa] hover:text-[#f7f7f9]'
-            }`}
-          >
-            Calles
-          </button>
-        </div>
-
-        <div className="h-3 w-px bg-[#2c221f] mx-0.5" />
-
-        {/* Toggle Swarms */}
-        <label className="flex items-center gap-1.5 text-[#d5c4fb] cursor-pointer hover:text-white transition-colors">
-          <input
-            type="checkbox"
-            checked={showSwarms}
-            onChange={(e) => setShowSwarms(e.target.checked)}
-            className="w-3 h-3 accent-[#844dea] rounded cursor-pointer"
-          />
-          <span className="text-[10px]">Enjambres</span>
-        </label>
-
-        <div className="h-3 w-px bg-[#2c221f] mx-0.5" />
-
-        {/* Toggle Tectonic Plates */}
-        <label className="flex items-center gap-1.5 text-[#fcd34d] cursor-pointer hover:text-white transition-colors">
-          <input
-            type="checkbox"
-            checked={showPlates}
-            onChange={(e) => setShowPlates(e.target.checked)}
-            className="w-3 h-3 accent-[#f59e0b] rounded cursor-pointer"
-          />
-          <span className="text-[10px]">Placas</span>
-        </label>
-
-        <div className="h-3 w-px bg-[#2c221f] mx-0.5" />
-
-        {/* Toggle SuperApp Hubs */}
-        <label className="flex items-center gap-1.5 text-[#38bdf8] cursor-pointer hover:text-white transition-colors">
-          <input
-            type="checkbox"
-            checked={showHubs}
-            onChange={(e) => setShowHubs(e.target.checked)}
-            className="w-3 h-3 accent-[#0284c7] rounded cursor-pointer"
-          />
-          <span className="text-[10px]">Hubs ({computedHubs.length})</span>
-        </label>
-      </div>
-
-      {/* Regional Camera Presets */}
-      <div className="absolute top-3 right-3 z-[20] hidden lg:flex items-center gap-1 bg-[#171211]/90 backdrop-blur-md px-2 py-1 rounded-lg border border-[#2c221f] text-[10px] font-mono shadow-sm">
-        <Navigation className="w-3 h-3 text-[#d5c4fb]" />
-        <span className="text-[#9b9baa] font-medium mr-0.5">Vuelo:</span>
-        {REGIONAL_PRESETS.map((p) => (
-          <button
-            key={p.id}
-            onClick={() => mapInstanceRef.current?.flyTo([p.lat, p.lng], p.zoom, { duration: 1.2 })}
-            className="px-1.5 py-0.5 rounded hover:bg-[#2c221f] text-[#d5c4fb] hover:text-white transition-colors cursor-pointer"
-            title={`Centrar mapa en ${p.name}`}
-          >
-            {p.name}
-          </button>
-        ))}
       </div>
 
       {/* Hubs Risk Alert Notification Banner */}
       {showHubs && alertHubsCount > 0 && (
-        <div className="absolute bottom-12 left-3 z-[20] flex items-center gap-1.5 bg-rose-500/20 border border-rose-500/40 text-rose-200 px-2.5 py-1 rounded-lg text-[10px] font-mono shadow-md backdrop-blur-md animate-pulse">
+        <div className="absolute bottom-12 left-3 z-[500] flex items-center gap-1.5 bg-rose-500/20 border border-rose-500/40 text-rose-200 px-2.5 py-1 rounded-lg text-[10px] font-mono shadow-md backdrop-blur-md animate-pulse">
           <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
-          <span>{alertHubsCount} Hub(s) SuperApp en radio de impacto</span>
+          <span>{alertHubsCount} Hubs SuperApp en radio de impacto</span>
         </div>
       )}
 
-      {/* Magnitude Legend Indicator */}
-      <div className="absolute bottom-3 right-3 z-[20] hidden sm:flex items-center gap-2.5 bg-[#171211]/90 backdrop-blur-md px-2.5 py-1 rounded-lg border border-[#2c221f] text-[10px] font-mono text-[#9b9baa]">
-        <span className="uppercase text-[9px] font-medium">Escala:</span>
-        <div className="flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full bg-[#86efac]" />
-          <span>&lt; 3.0</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full bg-[#fcd34d]" />
-          <span>3.0 - 4.5</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full bg-[#fb923c]" />
-          <span>4.5 - 6.0</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full bg-[#f87171]" />
-          <span>&ge; 6.0</span>
-        </div>
-        <div className="h-2.5 w-px bg-[#2c221f] mx-0.5" />
-        <div className="flex items-center gap-1">
-          <span className="text-[10px]">🏢</span>
-          <span className="text-[#38bdf8]">Hubs</span>
-        </div>
+      {/* Cockpit HUD: Botón Desplegable de Escala / Leyenda */}
+      <div className="absolute bottom-3 right-3 z-[500] pointer-events-auto flex flex-col items-end gap-1.5">
+        {showLegend && (
+          <div className="bg-slate-900/95 backdrop-blur-md border border-slate-700/80 rounded-xl p-3 text-xs shadow-2xl space-y-2 max-w-[260px] animate-in fade-in slide-in-from-bottom-2 duration-150">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+              <div className="flex items-center gap-1.5 font-semibold text-slate-200">
+                <Waves className="w-3.5 h-3.5 text-cyan-400" />
+                <span className="text-[11px] font-mono">Escala Sísmica</span>
+              </div>
+              <button
+                onClick={() => setShowLegend(false)}
+                className="text-slate-400 hover:text-white p-0.5 rounded cursor-pointer"
+                title="Cerrar escala"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[10px] font-mono">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#f87171] shadow-xs shadow-[#f87171]/50"></span>
+                <span className="text-slate-300">≥ 6.0 · Crítico</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#fb923c] shadow-xs shadow-[#fb923c]/50"></span>
+                <span className="text-slate-300">4.5 - 6.0</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#fcd34d] shadow-xs shadow-[#fcd34d]/50"></span>
+                <span className="text-slate-300">3.0 - 4.5</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#86efac] shadow-xs shadow-[#86efac]/50"></span>
+                <span className="text-slate-300">&lt; 3.0</span>
+              </div>
+            </div>
+            <div className="flex items-center justify-between pt-1.5 border-t border-slate-800 text-[9px] font-mono text-slate-400">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px]">🏢</span>
+                <span className="text-sky-300/90">Hubs SuperApp</span>
+              </div>
+              <span>{events.length} Eventos</span>
+            </div>
+          </div>
+        )}
+
+        <button
+          onClick={() => setShowLegend(!showLegend)}
+          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border backdrop-blur-md text-xs font-mono font-medium shadow-lg transition-all cursor-pointer ${
+            showLegend
+              ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40'
+              : 'bg-slate-900/80 text-slate-300 border-slate-700/80 hover:bg-slate-800 hover:text-white'
+          }`}
+          title="Ver/Ocultar escala y simbología"
+        >
+          <Waves className="w-3.5 h-3.5 text-cyan-400" />
+          <span>Escala</span>
+          {showLegend ? <ChevronDown className="w-3 h-3 text-slate-400" /> : <ChevronUp className="w-3 h-3 text-slate-400" />}
+        </button>
       </div>
 
       {/* Leaflet Map Div Container */}
