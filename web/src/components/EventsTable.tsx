@@ -45,10 +45,18 @@ export const EventsTable: React.FC<EventsTableProps> = ({
   events,
   total,
   page,
+  limit = 15,
   totalPages,
   onPageChange,
   loading,
 }) => {
+  const pageSize = limit || 15;
+  const effectiveTotal = total || events.length;
+  const effectiveTotalPages = totalPages > 1 ? totalPages : Math.max(1, Math.ceil(events.length / pageSize));
+  const displayedEvents = events.length > pageSize
+    ? events.slice((page - 1) * pageSize, page * pageSize)
+    : events;
+
   return (
     <div className="bg-[#171211] border border-[#261f1c] rounded-2xl overflow-hidden shadow-sm">
       <div className="p-4 border-b border-[#261f1c] flex items-center justify-between">
@@ -61,7 +69,7 @@ export const EventsTable: React.FC<EventsTableProps> = ({
               Registro Detallado de Eventos Sísmicos
             </h3>
             <p className="text-[10px] text-[#9b9baa] font-mono">
-              Capa Gold (`curated.earthquakes_curated`) &bull; Total: {total} registros
+              Capa Gold: <code className="text-[#dedee6]">curated.earthquakes_curated</code> &bull; Total: {effectiveTotal} registros
             </p>
           </div>
         </div>
@@ -81,14 +89,14 @@ export const EventsTable: React.FC<EventsTableProps> = ({
             </tr>
           </thead>
           <tbody className="divide-y divide-[#241c19] font-sans">
-            {events.length === 0 ? (
+            {displayedEvents.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-4 py-8 text-center text-[#9b9baa] font-mono text-xs">
                   {loading ? 'Cargando eventos...' : 'No hay eventos sísmicos disponibles.'}
                 </td>
               </tr>
             ) : (
-              events.map((evt) => (
+              displayedEvents.map((evt) => (
                 <tr key={evt.id} className="hover:bg-[#1e1715] transition-colors duration-150">
                   <td className="px-4 py-2.5 whitespace-nowrap">
                     {getMagnitudeBadge(evt.mag)}
@@ -140,7 +148,7 @@ export const EventsTable: React.FC<EventsTableProps> = ({
       <div className="p-3 border-t border-[#261f1c] flex items-center justify-between bg-[#140f0e] text-xs font-mono text-[#9b9baa]">
         <div>
           Página <span className="font-semibold text-[#f7f7f9]">{page}</span> de{' '}
-          <span className="font-semibold text-[#f7f7f9]">{Math.max(1, totalPages)}</span>
+          <span className="font-semibold text-[#f7f7f9]">{effectiveTotalPages}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <button
@@ -152,7 +160,7 @@ export const EventsTable: React.FC<EventsTableProps> = ({
           </button>
           <button
             onClick={() => onPageChange(page + 1)}
-            disabled={page >= totalPages || loading}
+            disabled={page >= effectiveTotalPages || loading}
             className="p-1.5 rounded-lg bg-[#1f1715] hover:bg-[#281e1b] text-[#ececf1] disabled:opacity-40 disabled:hover:bg-[#1f1715] border border-[#2b211e] transition-colors"
           >
             <ChevronRight className="w-4 h-4" />

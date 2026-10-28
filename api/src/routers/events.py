@@ -34,10 +34,10 @@ def list_events(
     params = {}
 
     if start_date:
-        conditions.append("time >= :start_date::timestamp")
+        conditions.append("time >= CAST(:start_date AS TIMESTAMP)")
         params["start_date"] = start_date
     if end_date:
-        conditions.append("time <= :end_date::timestamp + INTERVAL '1 day'")
+        conditions.append("time <= CAST(:end_date AS TIMESTAMP) + INTERVAL '1 day'")
         params["end_date"] = end_date
     if min_magnitude is not None:
         conditions.append("mag >= :min_magnitude")
