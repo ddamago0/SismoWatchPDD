@@ -31,7 +31,7 @@ def generate_deterministic_daily_report(data: Dict[str, Any]) -> str:
     anomalies_md = ""
     if anomalies:
         for a in anomalies:
-            anomalies_md += f"- ⚠️ **{a.get('type', 'ALERTA')}** en *{a.get('region', 'N/A')}*: {a.get('explanation', '')}\n"
+            anomalies_md += f"- **{a.get('type', 'ALERTA')}** en *{a.get('region', 'N/A')}*: {a.get('explanation', '')}\n"
     else:
         anomalies_md = "- Los niveles de frecuencia y magnitud se mantienen dentro de los parámetros estadísticos habituales (Z-score < 2.0).\n"
 
@@ -43,14 +43,13 @@ def generate_deterministic_daily_report(data: Dict[str, Any]) -> str:
     else:
         severidad_text = "BAJA - Actividad microsísmica habitual."
 
-    return f"""# Reporte Ejecutivo de Actividad Sísmica Global ({report_date})
-*(Generado mediante el motor determinístico de contingencia de SismoWatch)*
+    clean_place = str(max_place).replace('"', '').strip()
 
-## 1. Resumen de Situación
+    return f"""## 1. Resumen de Situación
 Durante las últimas 24 horas correspondientes a la fecha **{report_date}**, la plataforma SismoWatch registró y validó un total de **{total_events} eventos sísmicos** a nivel global. La magnitud promedio observada fue de **{avg_mag}**, evidenciando un comportamiento general dentro de los márgenes operacionales esperados para la red de monitoreo.
 
 ## 2. Eventos Destacados y Máxima Severidad
-- **Evento de mayor energía**: Magnitud **{max_mag}** localizado en **"{max_place}"**.
+- **Evento de mayor energía**: Magnitud **{max_mag}** localizado en **{clean_place}**.
 - **Evaluación de severidad**: {severidad_text}
 - **Alertas de tsunami emitidas**: **{tsunami_count}** alertas activas registradas en los sistemas de alerta temprana.
 

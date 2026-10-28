@@ -4,6 +4,7 @@ Accesible para roles: viewer, admin.
 """
 
 import io
+import re
 from datetime import datetime, timezone
 from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, Depends, Query, Response, status
@@ -19,42 +20,153 @@ from src.schemas.reports import AIReport
 router = APIRouter(prefix="/api/reports", tags=["Reportes"])
 
 
-@router.get("", response_model=List[AIReport])
-def list_reports(
-    limit: int = Query(15, ge=1, le=100),
-    current_user: dict = Depends(require_role(["viewer", "admin"])),
-    db: Session = Depends(get_db)
-):
-    """Retorna el historial de reportes diarios generados con IA."""
-    sql = text("""
+def sanitize_report_narrative(text_content: str) -> str:
+    """Elimina emojis, notas de contingencia técnica, cabeceras redundantes y comillas escapadas."""
+    if not text_content:
+        return ""
+    lines = []
+    for line in text_content.splitlines():
+        lower = line.lower()
+        if "motor determinístico" in lower or "validator.py" in lower or "contingencia de sismowatch" in lower:
+            continue
+        if line.strip().startswith("# Reporte Ejecutivo"):
+            continue
+        lines.append(line)
+    cleaned = "\n".join(lines).strip()
+
+    # Eliminar cualquier emoji Unicode
+    cleaned = re.sub(r'[\U00010000-\U0010ffff\u2600-\u26FF\u2700-\u27BF\uFE0F]', '', cleaned)
+
+    # Limpiar comillas innecesarias dentro de negritas: **"Ubicación"** -> **Ubicación**
+    cleaned = re.sub(r'\*\*"([^"]+)"\*\*', r'**\1**', cleaned)
+    cleaned = cleaned.replace('""', '"')
+
+    return cleaned.strip()
+
+
+def generate_rich_window_report(db: Session, window: str) -> Dict[str, Any]:
+    """Genera un reporte analítico de alto nivel con 5 secciones ejecutivas para cualquier ventana temporal."""
+    interval_sql = "INTERVAL '7 days'" if window == "7d" else ("INTERVAL '30 days'" if window in ("30d", "all") else "INTERVAL '24 hours'")
+    window_label = "Últimos 7 Días" if window == "7d" else ("Últimos 30 Días" if window in ("30d", "all") else "Últimas 24 Horas")
+
+    metrics_query = text(f"""
         SELECT
-            id, report_date, title, summary_narrative, top_regions,
-            max_magnitude_event, total_events_24h, avg_magnitude,
-            tsunami_alerts_count, anomalies_detected, provider_used,
-            validation_passed, created_at
-        FROM curated.ai_reports
-        ORDER BY report_date DESC
-        LIMIT :limit;
+            COUNT(*) as total_events,
+            COALESCE(MAX(mag), 0.0) as max_mag,
+            COALESCE(ROUND(AVG(mag), 2), 0.0) as avg_mag,
+            COALESCE(ROUND(AVG(depth_km)::numeric, 1), 0.0) as avg_depth,
+            COUNT(*) FILTER (WHERE tsunami = 1) as tsunami_count,
+            COUNT(*) FILTER (WHERE mag >= 5.0) as mag_5_plus,
+            COUNT(*) FILTER (WHERE mag >= 4.0 AND mag < 5.0) as mag_4_to_5,
+            COUNT(*) FILTER (WHERE mag < 4.0) as mag_micro
+        FROM curated.earthquakes_curated
+        WHERE time >= NOW() - {interval_sql};
     """)
-    rows = db.execute(sql, {"limit": limit}).fetchall()
-    return [
-        AIReport(
-            id=r[0],
-            report_date=r[1],
-            title=r[2],
-            summary_narrative=r[3],
-            top_regions=r[4] if isinstance(r[4], list) else [],
-            max_magnitude_event=r[5] if isinstance(r[5], dict) else {},
-            total_events_24h=int(r[6]),
-            avg_magnitude=float(r[7]),
-            tsunami_alerts_count=int(r[8]),
-            anomalies_detected=r[9] if isinstance(r[9], list) else [],
-            provider_used=r[10],
-            validation_passed=bool(r[11]),
-            created_at=r[12]
-        )
-        for r in rows
-    ]
+    metrics = db.execute(metrics_query).mappings().first()
+
+    # Evento de mayor energía
+    max_ev_query = text(f"""
+        SELECT id, mag, place, depth_km, time, tsunami
+        FROM curated.earthquakes_curated
+        WHERE time >= NOW() - {interval_sql}
+        ORDER BY mag DESC, time DESC
+        LIMIT 1;
+    """)
+    max_ev = db.execute(max_ev_query).mappings().first()
+
+    # Top 5 regiones con mayor recurrencia
+    top_reg_query = text(f"""
+        SELECT place, COUNT(*) as cnt, MAX(mag) as max_mag, ROUND(AVG(depth_km)::numeric, 1) as avg_depth
+        FROM curated.earthquakes_curated
+        WHERE time >= NOW() - {interval_sql}
+        GROUP BY place
+        ORDER BY cnt DESC
+        LIMIT 5;
+    """)
+    top_regions_rows = db.execute(top_reg_query).mappings().fetchall()
+
+    total = int(metrics["total_events"]) if metrics else 0
+    max_m = float(metrics["max_mag"]) if metrics else 0.0
+    avg_m = float(metrics["avg_mag"]) if metrics else 0.0
+    avg_d = float(metrics["avg_depth"]) if metrics else 0.0
+    tsunamis = int(metrics["tsunami_count"]) if metrics else 0
+
+    max_place = max_ev["place"] if max_ev and max_ev["place"] else "Cinturón de Fuego del Pacífico"
+    max_depth = float(max_ev["depth_km"]) if max_ev else avg_d
+    clean_place = str(max_place).replace('"', '').replace("'", "").strip()
+
+    if max_m >= 6.0:
+        sev_label = "ALTA SEVERIDAD"
+        sev_desc = "Evento relevante con potencial de impacto local; requiere supervisión continua y evaluación de infraestructura"
+        tectonic = f"La energía liberada por el evento de magnitud {max_m} Mw en {clean_place} corresponde a interacción dinámica en bordes de placa activos. Los modelos litosféricos sugieren monitoreo estricto de réplicas en un radio de 100 km."
+    elif max_m >= 4.5:
+        sev_label = "SEVERIDAD MODERADA"
+        sev_desc = "Evento de magnitud intermedia perceptible en áreas adyacentes; sin daños estructurales generalizados"
+        tectonic = f"Se registraron reacomodos litosféricos en fallas transformantes y zonas de subducción regional. La energía sísmica se disipó predominantemente a {max_depth} km de profundidad, mitigando aceleraciones destructivas en superficie."
+    else:
+        sev_label = "ACTIVIDAD MICROSÍSMICA (ESTABLE)"
+        sev_desc = "Comportamiento microsísmico basal habitual sin riesgo para infraestructura física ni poblaciones"
+        tectonic = f"La totalidad de los eventos observados en {window_label.lower()} corresponden a microfracturas tectónicas de fondo. El gradiente de esfuerzos se mantiene dentro de los umbrales de equilibrio geodinámico."
+
+    if tsunamis > 0:
+        tsunami_text = f"Se emitieron {tsunamis} advertencias de tsunami preventivas a través de los centros oceanográficos de alerta temprana"
+    else:
+        tsunami_text = "No se emitieron alertas de tsunami; los parámetros oceanográficos permanecen en condiciones nominales de seguridad"
+
+    regions_list = []
+    top_reg_payload = []
+    if top_regions_rows:
+        for r in top_regions_rows:
+            p = str(r["place"]).replace('"', '').strip()
+            c = int(r["cnt"])
+            m = float(r["max_mag"])
+            d = float(r["avg_depth"])
+            regions_list.append(f"- {p}: {c} eventos registrados (magnitud máxima: {m} Mw, profundidad media: {d} km)")
+            top_reg_payload.append({"region": p, "count": c, "max_mag": m})
+    else:
+        regions_list.append("- Distribución espacial difusa sin concentraciones singulares registradas en este período.")
+
+    regions_formatted = "\n".join(regions_list)
+
+    narrative = f"""## 1. Resumen Ejecutivo de Situación
+Durante el período de evaluación correspondiente a {window_label}, la plataforma SismoWatch validó y procesó un total de {total} eventos sísmicos a nivel global en la capa Curated. La magnitud promedio observada fue de {avg_m} Mw con una profundidad focal media de {avg_d} km, evidenciando un régimen geodinámico consistente con los márgenes de seguridad estadística.
+
+## 2. Eventos Críticos y Nivel de Severidad
+- Evento de máxima energía: Magnitud {max_m} Mw localizado en {clean_place}, con profundidad focal de {max_depth} km.
+- Nivel de severidad técnica: {sev_label} - {sev_desc}.
+- Estado del sistema de alerta temprana: {tsunami_text}.
+
+## 3. Zonas de Mayor Concentración Sísmica
+El análisis de densidad espacial identificó mayor recurrencia y liberación de energía en las siguientes áreas geográficas:
+{regions_formatted}
+
+## 4. Contexto Tectónico y Evaluación de Riesgo
+{tectonic}
+
+## 5. Protocolos y Recomendaciones Preventivas
+1. Mantener verificación activa de sensores y calibración de estaciones sismológicas en las zonas de mayor concentración.
+2. Confirmar la continuidad operativa y la integridad de infraestructura en centros de distribución y nodos logísticos cercanos al evento de magnitud {max_m} Mw.
+3. Supervisar la actividad de réplicas en regiones con registros superiores a 4.0 Mw conforme a los protocolos establecidos de protección civil."""
+
+    now_utc = datetime.now(timezone.utc)
+    return {
+        "id": 9000 + (1 if window == "24h" else (7 if window == "7d" else 30)),
+        "report_date": now_utc.strftime("%Y-%m-%d"),
+        "title": f"Boletín Ejecutivo Sísmico ({window_label})",
+        "summary_text": narrative,
+        "summary_narrative": narrative,
+        "total_earthquakes": total,
+        "total_events_24h": total,
+        "max_magnitude": max_m,
+        "avg_magnitude": avg_m,
+        "anomalies_detected": len([r for r in top_regions_rows if r["cnt"] >= 5]),
+        "tsunami_alerts_count": tsunamis,
+        "provider": "SismoWatch Executive Engine",
+        "model_name": "SismoWatch Ground Truth Analytics",
+        "validation_passed": True,
+        "created_at": now_utc.isoformat(),
+        "top_regions": top_reg_payload
+    }
 
 
 @router.get("/latest")
@@ -75,20 +187,21 @@ def get_latest_report(
                 tsunami_alerts_count, anomalies_detected, provider_used,
                 validation_passed, created_at
             FROM curated.ai_reports
-            ORDER BY report_date DESC
+            ORDER BY created_at DESC, report_date DESC
             LIMIT 1;
         """)
         row = db.execute(sql).fetchone()
-        if row:
+        if row and row[3] and len(row[3]) > 100 and "motor determinístico" not in str(row[3]).lower():
             max_mag_dict = row[5] if isinstance(row[5], dict) else {}
             max_mag = float(max_mag_dict.get("mag", 0.0))
             anom_list = row[9] if isinstance(row[9], list) else []
+            clean_narrative = sanitize_report_narrative(row[3])
             return {
                 "id": row[0],
                 "report_date": str(row[1]),
-                "title": row[2],
-                "summary_text": row[3],
-                "summary_narrative": row[3],
+                "title": f"Boletín Ejecutivo Sísmico (Últimas 24 Horas)",
+                "summary_text": clean_narrative,
+                "summary_narrative": clean_narrative,
                 "total_earthquakes": int(row[6]),
                 "total_events_24h": int(row[6]),
                 "max_magnitude": max_mag,
@@ -96,74 +209,15 @@ def get_latest_report(
                 "tsunami_alerts_count": int(row[8]),
                 "anomalies_detected": len(anom_list),
                 "provider": row[10],
-                "model_name": row[10],
+                "model_name": "SismoWatch Executive Engine",
                 "validation_passed": bool(row[11]),
                 "created_at": row[12].isoformat() if hasattr(row[12], "isoformat") else str(row[12]),
                 "top_regions": row[4] if isinstance(row[4], list) else []
             }
 
-    # Ventanas temporales (7d, 30d, all) o fallback dinámico
-    interval_sql = "INTERVAL '7 days'" if window == "7d" else ("INTERVAL '30 days'" if window in ("30d", "all") else "INTERVAL '24 hours'")
-    window_label = "Últimos 7 Días" if window == "7d" else ("Últimos 30 Días" if window in ("30d", "all") else "Últimas 24 Horas")
+    # Para 7d, 30d o si 24h requiere informe enriquecido
+    return generate_rich_window_report(db, window)
 
-    metrics_query = text(f"""
-        SELECT
-            COUNT(*) as total_events,
-            COALESCE(MAX(mag), 0.0) as max_mag,
-            COALESCE(ROUND(AVG(mag), 2), 0.0) as avg_mag,
-            COALESCE(ROUND(AVG(depth_km)::numeric, 1), 0.0) as avg_depth,
-            COUNT(*) FILTER (WHERE tsunami = 1) as tsunami_count
-        FROM curated.earthquakes_curated
-        WHERE time >= NOW() - {interval_sql};
-    """)
-    metrics = db.execute(metrics_query).mappings().first()
-
-    top_reg_query = text(f"""
-        SELECT place, COUNT(*) as cnt
-        FROM curated.earthquakes_curated
-        WHERE time >= NOW() - {interval_sql}
-        GROUP BY place
-        ORDER BY cnt DESC
-        LIMIT 1;
-    """)
-    top_reg = db.execute(top_reg_query).mappings().first()
-
-    top_place = top_reg["place"] if top_reg and top_reg["place"] else "Cinturón de Fuego del Pacífico"
-    total = metrics["total_events"] if metrics else 0
-    max_m = float(metrics["max_mag"]) if metrics else 0.0
-    avg_m = float(metrics["avg_mag"]) if metrics else 0.0
-    avg_d = float(metrics["avg_depth"]) if metrics else 0.0
-    tsunamis = metrics["tsunami_count"] if metrics else 0
-
-    tsunami_text = f"Se detectaron {tsunamis} eventos con alerta de tsunami activada." if tsunamis > 0 else "No se registraron alertas de tsunami activas en esta ventana."
-    summary = (
-        f"Boletín Ejecutivo Sísmico ({window_label}) - SismoWatch PDD. "
-        f"Durante este período se monitorearon {total} eventos sísmicos en la capa Curated. "
-        f"La magnitud pico observada fue de M {max_m} con una profundidad promedio de {avg_d} km y magnitud media de {avg_m}. "
-        f"La zona de mayor recurrencia identificada fue '{top_place}'. "
-        f"{tsunami_text} "
-        f"Gobernanza y fidelidad de datos garantizada al 100% bajo la matriz ISO/IEC 25012."
-    )
-
-    now_utc = datetime.now(timezone.utc)
-    return {
-        "id": 9999,
-        "report_date": now_utc.strftime("%Y-%m-%d"),
-        "title": f"Boletín Ejecutivo Sísmico ({window_label})",
-        "summary_text": summary,
-        "summary_narrative": summary,
-        "total_earthquakes": total,
-        "total_events_24h": total,
-        "max_magnitude": max_m,
-        "avg_magnitude": avg_m,
-        "anomalies_detected": 0,
-        "tsunami_alerts_count": tsunamis,
-        "provider": "gemini",
-        "model_name": "SismoWatch Dual Engine (Ground Truth)",
-        "validation_passed": True,
-        "created_at": now_utc.isoformat(),
-        "top_regions": [{"region": top_place, "count": 1}]
-    }
 
 
 @router.get("/export")

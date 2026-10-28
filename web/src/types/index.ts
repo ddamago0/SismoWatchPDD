@@ -92,11 +92,13 @@ export interface AiReport {
   total_earthquakes: number;
   max_magnitude: number;
   anomalies_detected: number;
-  provider: 'gemini' | 'groq' | 'template';
+  provider: 'gemini' | 'groq' | 'template' | string;
   model_name: string;
   validation_passed: boolean;
   created_at: string;
+  tsunami_alerts_count?: number;
 }
+
 
 export interface QuarantineRecord {
   quarantine_id: number;
