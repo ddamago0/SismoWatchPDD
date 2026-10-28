@@ -204,6 +204,47 @@ def get_live_seismic_facts(db: Session) -> Dict[str, Any]:
         }
 
 
+SEVERITY_PALETTE = ["#4edea3", "#adc6ff", "#ffb690", "#ec6a06", "#ef4444"]
+ACCENT_PALETTE = ["#844dea", "#a855f7", "#c084fc", "#60a5fa", "#38bdf8", "#34d399"]
+
+
+def build_declarative_chart(
+    chart_type: str,
+    title: str,
+    labels: List[str],
+    data: List[Any],
+    dataset_label: str = "Cantidad",
+    color_palette: Optional[List[str]] = None,
+) -> Dict[str, Any]:
+    """
+    Construye una especificación JSON declarativa (ADR 0008).
+    Frontend y backend consumen datos estructurados sin ejecución de código inseguro.
+    """
+    if not chart_type or chart_type == "none" or not data:
+        return {"type": "none"}
+
+    if not color_palette:
+        if chart_type in ("doughnut", "pie"):
+            color_palette = SEVERITY_PALETTE
+        else:
+            color_palette = ACCENT_PALETTE * 3
+
+    return {
+        "type": chart_type,
+        "title": title,
+        "labels": labels,
+        "datasets": [
+            {
+                "label": dataset_label,
+                "data": data,
+                "backgroundColor": color_palette[: len(data)],
+                "borderColor": "#181c24",
+                "borderWidth": 1,
+            }
+        ],
+    }
+
+
 class SismoAiAgent:
     def __init__(self):
         self.groq_api_key = os.getenv("GROQ_API_KEY", "").strip()
@@ -292,6 +333,7 @@ class SismoAiAgent:
         # 5. Rama Conversacional / Reporte Ejecutivo / Zonas Activas vs Calmas
         if self._is_conversational_or_report(lower_text) and not lower_text.startswith("select "):
             analysis_text, provider_name = self._generate_conversational_analysis(clean_text, facts, history)
+            chart_payload = self._build_declarative_chart_if_relevant(clean_text, db)
             latency_ms = int((time.time() - start_time) * 1000)
             return {
                 "sender": "bot",
@@ -310,6 +352,7 @@ class SismoAiAgent:
                     "max_mag_24h": facts.get("kpis", {}).get("max_mag_24h"),
                     "top_place": facts.get("top_places", [{}])[0].get("place") if facts.get("top_places") else None,
                 },
+                "chart": chart_payload or {"type": "none"},
             }
 
         # 6. Rama Text-to-SQL + AST Guard + Tabular Results
@@ -344,6 +387,7 @@ class SismoAiAgent:
                 "provider_used": "AST Security Guard",
                 "latency_ms": latency_ms,
                 "suggested_questions": DEFAULT_SUGGESTIONS,
+                "chart": {"type": "none"},
             }
 
         # Ejecución segura en base de datos (Transacción Read Only)
@@ -366,10 +410,12 @@ class SismoAiAgent:
                 "provider_used": provider_used,
                 "latency_ms": latency_ms,
                 "suggested_questions": DEFAULT_SUGGESTIONS,
+                "chart": {"type": "none"},
             }
 
-        # Generación de síntesis narrativa inteligente
+        # Generación de síntesis narrativa inteligente y gráfico declarativo
         narrative_reply = self._generate_narrative(clean_text, safe_sql, rows, provider_used)
+        chart_payload = self._build_declarative_chart_if_relevant(clean_text, db, rows=rows, columns=columns)
         latency_ms = int((time.time() - start_time) * 1000)
 
         return {
@@ -384,6 +430,7 @@ class SismoAiAgent:
             "provider_used": provider_used,
             "latency_ms": latency_ms,
             "suggested_questions": self._build_contextual_suggestions(clean_text),
+            "chart": chart_payload or {"type": "none"},
         }
 
     def _is_greeting(self, text_str: str) -> bool:
@@ -420,6 +467,121 @@ class SismoAiAgent:
                 "¿Hay alertas de tsunami activas?",
             ]
         return DEFAULT_SUGGESTIONS
+
+    def _build_declarative_chart_if_relevant(
+        self,
+        text_query: str,
+        db: Session,
+        rows: Optional[List[Dict[str, Any]]] = None,
+        columns: Optional[List[str]] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Construye un gráfico declarativo JSON estructurado conforme al protocolo del ADR 0008."""
+        p = text_query.lower()
+
+        # 1. Caso: Distribución por Severidad / Categorías Richter
+        if any(k in p for k in ["severidad", "categoría", "categoria", "distribucion", "distribución", "escala", "richter"]):
+            try:
+                sql = """
+                    SELECT 
+                        CASE 
+                            WHEN mag < 2.5 THEN 'Micro (<2.5)'
+                            WHEN mag < 4.5 THEN 'Menor (2.5-4.4)'
+                            WHEN mag < 6.0 THEN 'Moderado (4.5-5.9)'
+                            WHEN mag < 7.0 THEN 'Fuerte (6.0-6.9)'
+                            ELSE 'Mayor (>=7.0)'
+                        END as severity_label,
+                        COUNT(*) as count
+                    FROM curated.earthquakes_curated
+                    GROUP BY severity_label
+                    ORDER BY count DESC;
+                """
+                res = db.execute(text(sql)).fetchall()
+                if res:
+                    labels = [r[0] for r in res]
+                    data = [int(r[1]) for r in res]
+                    return build_declarative_chart(
+                        chart_type="bar",
+                        title="Distribución Sísmica por Severidad Richter",
+                        labels=labels,
+                        data=data,
+                        dataset_label="Sismos Registrados",
+                        color_palette=SEVERITY_PALETTE,
+                    )
+            except Exception as e:
+                logger.warning("No fue posible generar gráfico de severidad: %s", str(e))
+
+        # 2. Caso: Serie Temporal / Frecuencia Horaria en 24h
+        if any(k in p for k in ["hora", "evolucion", "evolución", "serie", "tiempo", "hoy", "frecuencia", "pico", "tendencia"]):
+            try:
+                sql = """
+                    SELECT TO_CHAR(time, 'HH24:00') as hr, COUNT(*) as count
+                    FROM curated.earthquakes_curated
+                    WHERE time >= NOW() - INTERVAL '24 hours'
+                    GROUP BY hr
+                    ORDER BY hr ASC
+                    LIMIT 24;
+                """
+                res = db.execute(text(sql)).fetchall()
+                if len(res) >= 2:
+                    labels = [r[0] for r in res]
+                    data = [int(r[1]) for r in res]
+                    return build_declarative_chart(
+                        chart_type="line",
+                        title="Frecuencia Sísmica por Hora (Últimas 24 Horas)",
+                        labels=labels,
+                        data=data,
+                        dataset_label="Eventos Registrados",
+                        color_palette=["#844dea"] * len(data),
+                    )
+            except Exception as e:
+                logger.warning("No fue posible generar gráfico de serie temporal: %s", str(e))
+
+        # 3. Caso: Top Regiones más activas
+        if any(k in p for k in ["top", "regiones", "más activos", "lugares", "zonas más", "frecuencia"]):
+            try:
+                sql = """
+                    SELECT COALESCE(place, 'Desconocido') as reg, COUNT(*) as count
+                    FROM curated.earthquakes_curated
+                    WHERE place IS NOT NULL AND place != ''
+                    GROUP BY reg
+                    ORDER BY count DESC
+                    LIMIT 5;
+                """
+                res = db.execute(text(sql)).fetchall()
+                if res:
+                    labels = [r[0][:26] for r in res]
+                    data = [int(r[1]) for r in res]
+                    return build_declarative_chart(
+                        chart_type="bar",
+                        title="Top 5 Regiones con Mayor Frecuencia Sísmica",
+                        labels=labels,
+                        data=data,
+                        dataset_label="Cantidad de Sismos",
+                        color_palette=ACCENT_PALETTE,
+                    )
+            except Exception as e:
+                logger.warning("No fue posible generar gráfico de top regiones: %s", str(e))
+
+        # 4. Caso: Gráfico a partir de resultados tabulares SQL si tienen formato (label, valor)
+        if rows and len(rows) >= 2 and len(rows) <= 10 and columns and len(columns) == 2:
+            try:
+                label_col, val_col = columns[0], columns[1]
+                sample_val = rows[0].get(val_col)
+                if isinstance(sample_val, (int, float)):
+                    labels = [str(r.get(label_col, ''))[:25] for r in rows]
+                    data = [float(r.get(val_col, 0)) for r in rows]
+                    return build_declarative_chart(
+                        chart_type="bar",
+                        title=f"Visualización: {label_col} vs {val_col}",
+                        labels=labels,
+                        data=data,
+                        dataset_label=val_col.upper(),
+                        color_palette=ACCENT_PALETTE,
+                    )
+            except Exception:
+                pass
+
+        return None
 
     def _generate_conversational_analysis(
         self,

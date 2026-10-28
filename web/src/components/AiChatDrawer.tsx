@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
-import { SqlQueryResult } from '../types';
+import { SqlQueryResult, DeclarativeChart } from '../types';
 import {
   Sparkles,
   X,
@@ -27,6 +27,7 @@ import {
   TrendingUp,
   Clock,
   ArrowRight,
+  BarChart2,
 } from 'lucide-react';
 
 interface AiChatDrawerProps {
@@ -47,6 +48,7 @@ interface ChatMessage {
   status?: string;
   latency_ms?: number;
   suggested_questions?: string[];
+  chart?: DeclarativeChart;
 }
 
 interface WelcomeSuggestion {
@@ -451,15 +453,155 @@ function ResultDataTable({
   );
 }
 
+// Visualizador de Gráficos Declarativos (ADR 0008)
+function DeclarativeChartRenderer({ chart }: { chart: DeclarativeChart }) {
+  if (!chart || chart.type === 'none' || !chart.labels || !chart.datasets || chart.datasets.length === 0) {
+    return null;
+  }
+
+  const dataset = chart.datasets[0];
+  const data = dataset.data || [];
+  const maxVal = Math.max(...data, 1);
+  const colors = dataset.backgroundColor || ['#844dea', '#a855f7', '#c084fc', '#60a5fa', '#38bdf8'];
+
+  return (
+    <div className="mt-3 p-3 rounded-xl border border-[#2d2421] bg-[#0c0a09] shadow-inner space-y-2.5">
+      <div className="flex items-center justify-between border-b border-[#241c19] pb-2">
+        <div className="flex items-center gap-1.5">
+          <BarChart2 className="w-3.5 h-3.5 text-[#844dea]" />
+          <h4 className="text-[11px] font-bold text-[#f7f7f9] tracking-tight">{chart.title}</h4>
+        </div>
+        <span className="text-[9px] font-mono text-[#a8a29e] bg-[#1a1413] px-2 py-0.5 rounded border border-[#241c19]">
+          {dataset.label || 'Valores'}
+        </span>
+      </div>
+
+      {/* Renderizado de Tipo Barras */}
+      {chart.type === 'bar' && (
+        <div className="space-y-2 pt-1">
+          {chart.labels.map((lbl, idx) => {
+            const val = data[idx] ?? 0;
+            const pct = Math.round((val / maxVal) * 100);
+            const color = colors[idx % colors.length];
+
+            return (
+              <div key={idx} className="space-y-1">
+                <div className="flex justify-between text-[10px] font-mono">
+                  <span className="text-[#ececf1] truncate max-w-[70%]">{lbl}</span>
+                  <span className="font-bold text-[#d5c4fb]">{val.toLocaleString()}</span>
+                </div>
+                <div className="w-full h-2 rounded-full bg-[#171211] overflow-hidden border border-[#241c19]">
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: `${Math.max(pct, 4)}%`,
+                      backgroundColor: color,
+                    }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Renderizado de Tipo Línea / Serie Temporal SVG */}
+      {chart.type === 'line' && (
+        <div className="pt-2">
+          <div className="h-28 w-full flex items-end gap-1 px-1">
+            {chart.labels.map((lbl, idx) => {
+              const val = data[idx] ?? 0;
+              const heightPct = Math.round((val / maxVal) * 100);
+              return (
+                <div key={idx} className="flex-1 flex flex-col items-center gap-1 group relative">
+                  <div className="opacity-0 group-hover:opacity-100 absolute -top-5 px-1 py-0.5 rounded bg-[#201a18] text-[9px] font-mono text-white border border-[#382f2c] pointer-events-none transition-opacity z-10 whitespace-nowrap">
+                    {lbl}: {val}
+                  </div>
+                  <div
+                    className="w-full rounded-t transition-all duration-500 hover:brightness-125"
+                    style={{
+                      height: `${Math.max(heightPct, 8)}%`,
+                      backgroundColor: '#844dea',
+                    }}
+                  />
+                  {idx % Math.ceil(chart.labels.length / 6) === 0 && (
+                    <span className="text-[8px] font-mono text-[#78716c] truncate w-full text-center">
+                      {lbl}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Renderizado de Donut / Desglose */}
+      {(chart.type === 'doughnut' || chart.type === 'pie') && (
+        <div className="space-y-2 pt-1">
+          <div className="flex h-3 w-full rounded-full overflow-hidden border border-[#241c19]">
+            {chart.labels.map((lbl, idx) => {
+              const val = data[idx] ?? 0;
+              const totalSum = data.reduce((a, b) => a + b, 0) || 1;
+              const pct = Math.round((val / totalSum) * 100);
+              const color = colors[idx % colors.length];
+              return (
+                <div
+                  key={idx}
+                  title={`${lbl}: ${val} (${pct}%)`}
+                  className="h-full transition-all duration-300 hover:brightness-125"
+                  style={{ width: `${pct}%`, backgroundColor: color }}
+                />
+              );
+            })}
+          </div>
+          <div className="flex flex-wrap gap-2 pt-1">
+            {chart.labels.map((lbl, idx) => {
+              const val = data[idx] ?? 0;
+              const color = colors[idx % colors.length];
+              return (
+                <div key={idx} className="flex items-center gap-1.5 text-[10px] font-mono text-[#a8a29e]">
+                  <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                  <span>{lbl}: <strong className="text-[#ececf1]">{val}</strong></span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({ isOpen, onClose }) => {
   const { user } = useAuth();
-  const [messages, setMessages] = useState<ChatMessage[]>([INITIAL_GREETING]);
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    try {
+      const saved = localStorage.getItem('sismowatch_chat_history');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {
+      // Ignore parsing errors
+    }
+    return [INITIAL_GREETING];
+  });
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(false);
   const [showSqlFor, setShowSqlFor] = useState<Record<string, boolean>>({});
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Sync to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('sismowatch_chat_history', JSON.stringify(messages));
+    } catch {
+      // Storage safe
+    }
+  }, [messages]);
 
   // Auto-scroll to bottom of chat
   useEffect(() => {
@@ -492,6 +634,11 @@ export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({ isOpen, onClose }) =
 
   const handleClearChat = () => {
     setMessages([INITIAL_GREETING]);
+    try {
+      localStorage.removeItem('sismowatch_chat_history');
+    } catch {
+      // Ignore
+    }
   };
 
   const sendMessage = async (textToSend: string) => {
@@ -529,6 +676,7 @@ export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({ isOpen, onClose }) =
         data: res.data || [],
         columns: res.columns || [],
         executed_sql: res.executed_sql,
+        chart: res.chart,
         row_count: res.row_count || (res.data ? res.data.length : 0),
         provider_used: res.provider_used || 'Groq LLaMA / Gemini',
         status: res.status || 'success',
@@ -642,6 +790,11 @@ export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({ isOpen, onClose }) =
                       <p className="leading-relaxed font-medium">{msg.text}</p>
                     ) : (
                       <FormattedReply text={msg.text} />
+                    )}
+
+                    {/* Renderizado de Gráfico Declarativo (ADR 0008) */}
+                    {!isUser && msg.chart && msg.chart.type && msg.chart.type !== 'none' && (
+                      <DeclarativeChartRenderer chart={msg.chart} />
                     )}
 
                     {/* Data Table Preview if query returned rows */}
