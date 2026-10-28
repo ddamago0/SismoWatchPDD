@@ -404,7 +404,7 @@ export const SeismicGlobe3D: React.FC<SeismicGlobe3DProps> = ({
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 6px; margin-bottom: 6px;">
           <span style="font-family: monospace; font-size: 11px; font-weight: bold; color: #38bdf8;">${ev.id}</span>
           <span style="background: ${color}; color: #0f172a; font-weight: 800; font-size: 11px; padding: 2px 6px; border-radius: 4px;">
-            M ${mag.toFixed(1)} (${magClass})
+            M ${mag.toFixed(1)} &bull; ${magClass}
           </span>
         </div>
         <div style="font-size: 12px; font-weight: 600; margin-bottom: 4px; color: #e2e8f0;">${ev.place || ev.title}</div>
@@ -442,7 +442,7 @@ export const SeismicGlobe3D: React.FC<SeismicGlobe3DProps> = ({
         <div style="font-size: 11px; color: #cbd5e1; display: grid; grid-template-columns: 1fr; gap: 4px; background: rgba(30, 41, 59, 0.5); padding: 6px 8px; border-radius: 6px;">
           <div>🛵 Flota Activa: <b style="color: #38bdf8;">${hub.activeCouriers} mensajeros</b></div>
           <div>📍 Sismo más cercano: <b style="color: ${hub.nearestEventDistanceKm !== undefined && hub.nearestEventDistanceKm < 150 ? '#f59e0b' : '#94a3b8'};">${hub.nearestEventDistanceKm !== undefined ? `${hub.nearestEventDistanceKm} km` : 'Sin sismos cercanos'}</b></div>
-          ${hub.triggerEventMag ? `<div style="color: #f87171;">⚠️ Activado por: <b>M ${hub.triggerEventMag.toFixed(1)}</b> (${hub.triggerEventPlace || 'Epicentro'})</div>` : ''}
+          ${hub.triggerEventMag ? `<div style="color: #f87171;">⚠️ Activado por: <b>M ${hub.triggerEventMag.toFixed(1)}</b> · ${hub.triggerEventPlace || 'Epicentro'}</div>` : ''}
         </div>
         <div style="margin-top: 8px; font-size: 10px; color: #94a3b8; font-style: italic;">
           ${isEvac ? '🚨 Protocolo: Suspender asignación de órdenes y evacuar personal.' : isWarn ? '⚠️ Protocolo: Notificar a repartidores en ruta y verificar inventario.' : '✅ Operación regular sin riesgos geofísicos inminentes.'}
@@ -504,7 +504,7 @@ export const SeismicGlobe3D: React.FC<SeismicGlobe3DProps> = ({
         pathDashLength={0.15}
         pathDashGap={0.03}
         pathDashAnimateTime={12000}
-        pathLabel={(d: any) => `<div style="background: rgba(15,23,42,0.95); border: 1px solid #b45309; padding: 4px 8px; border-radius: 4px; font-size: 11px; color: #fef3c7; font-family: monospace;">Falla: ${d.name} (${d.type})</div>`}
+        pathLabel={(d: any) => `<div style="background: rgba(15,23,42,0.95); border: 1px solid #b45309; padding: 4px 8px; border-radius: 4px; font-size: 11px; color: #fef3c7; font-family: monospace;">Falla: ${d.name} · ${d.type}</div>`}
         // Hubs Logísticos de SuperApp
         labelsData={showHubs ? computedHubs : []}
         labelLat={(d: any) => d.latitude}
@@ -554,7 +554,7 @@ export const SeismicGlobe3D: React.FC<SeismicGlobe3DProps> = ({
                   ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-xs shadow-amber-500/20'
                   : 'bg-slate-900/60 text-slate-400 border-transparent hover:text-white hover:bg-slate-800'
               }`}
-              title={`Fallas y Placas Tectónicas (PB2002): ${showPlates ? 'Visibles' : 'Ocultas'}`}
+              title={`Fallas y Placas Tectónicas: ${showPlates ? 'Visibles' : 'Ocultas'}`}
             >
               <Layers className="w-3.5 h-3.5" />
             </button>
@@ -568,7 +568,7 @@ export const SeismicGlobe3D: React.FC<SeismicGlobe3DProps> = ({
                     : 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 shadow-xs shadow-cyan-500/20'
                   : 'bg-slate-900/60 text-slate-400 border-transparent hover:text-white hover:bg-slate-800'
               }`}
-              title={`Hubs SuperApp (10 Dark Stores): ${showHubs ? 'Visibles' : 'Ocultos'}`}
+              title={`Hubs SuperApp: ${showHubs ? 'Visibles' : 'Ocultos'}`}
             >
               <Building2 className="w-3.5 h-3.5" />
             </button>
@@ -645,7 +645,7 @@ export const SeismicGlobe3D: React.FC<SeismicGlobe3DProps> = ({
       {showHubs && alertHubsCount > 0 && (
         <div className="absolute top-16 left-4 z-20 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-rose-500/20 border border-rose-500/40 text-rose-200 text-xs font-semibold backdrop-blur shadow-xl animate-pulse">
           <ShieldAlert className="w-4 h-4 text-rose-400" />
-          <span>{alertHubsCount} Hub(s) SuperApp en radio de impacto</span>
+          <span>{alertHubsCount} Hubs SuperApp en radio de impacto</span>
         </div>
       )}
 
@@ -653,7 +653,7 @@ export const SeismicGlobe3D: React.FC<SeismicGlobe3DProps> = ({
       {anomalies.length > 0 && (
         <div className="absolute top-16 right-4 z-20 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-medium backdrop-blur">
           <Radio className="w-3.5 h-3.5 animate-pulse text-amber-400" />
-          <span>{anomalies.length} Enjambre(s) detectado(s)</span>
+          <span>{anomalies.length} Enjambres detectados</span>
         </div>
       )}
 
@@ -677,7 +677,7 @@ export const SeismicGlobe3D: React.FC<SeismicGlobe3DProps> = ({
             <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[10px] font-mono">
               <div className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-[#ff0055] shadow-xs shadow-[#ff0055]/50"></span>
-                <span className="text-slate-300">M ≥ 5.0 (Crítico)</span>
+                <span className="text-slate-300">M ≥ 5.0 · Crítico</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-[#ff9900] shadow-xs shadow-[#ff9900]/50"></span>
@@ -702,7 +702,7 @@ export const SeismicGlobe3D: React.FC<SeismicGlobe3DProps> = ({
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="text-[10px]">🏢</span>
-                <span className="text-sky-300/90">Hubs SuperApp (10)</span>
+                <span className="text-sky-300/90">Hubs SuperApp</span>
               </div>
             </div>
           </div>

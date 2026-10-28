@@ -73,7 +73,7 @@ export const EventsTable: React.FC<EventsTableProps> = ({
             <tr>
               <th className="px-4 py-3">Magnitud</th>
               <th className="px-4 py-3">Ubicación</th>
-              <th className="px-4 py-3">Fecha y Hora (UTC)</th>
+              <th className="px-4 py-3">Fecha y Hora UTC</th>
               <th className="px-4 py-3">Profundidad</th>
               <th className="px-4 py-3">Coordenadas</th>
               <th className="px-4 py-3">Tsunami</th>

@@ -432,20 +432,20 @@ export const PipelineHealthPanel: React.FC<PipelineHealthPanelProps> = ({ kpis }
         <div className="p-4 bg-[#120e0d] rounded-xl border border-[#241c19] text-xs font-mono text-[#a8a29e] space-y-2">
           <div className="text-[#ececf1] font-bold flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-[#86efac]" />
-            <span>Principios Arquitectónicos de Defensa de Tesis (SismoWatch PDD):</span>
+            <span>Principios Arquitectónicos de Defensa de Tesis:</span>
           </div>
           <ul className="list-disc list-inside space-y-1 text-[11px] text-[#9b9baa] pl-2">
             <li>
               <strong className="text-[#ececf1]">Preservación Absoluta:</strong> Todo registro sísmico recibido desde USGS FDSN es procesado y persistido en Bronze y Gold.
             </li>
             <li>
-              <strong className="text-[#ececf1]">Etiquetado en Lugar de Exclusión (ADR 0011):</strong> Si un evento presenta anomalías estadísticas o de calidad, es enriquecido con tags de calidad (<code className="text-[#fb923c] bg-[#241c19] px-1 py-0.5 rounded">FLAGGED</code>), pero permanece visible y auditable en la capa Gold sin pérdida de datos.
+              <strong className="text-[#ececf1]">Etiquetado en Lugar de Exclusión &bull; ADR 0011:</strong> Si un evento presenta anomalías estadísticas o de calidad, es enriquecido con tags de calidad <code className="text-[#fb923c] bg-[#241c19] px-1 py-0.5 rounded">FLAGGED</code>, pero permanece visible y auditable en la capa Gold sin pérdida de datos.
             </li>
             <li>
-              <strong className="text-[#ececf1]">Idempotencia en Serving Layer (ADR 0007):</strong> Las actualizaciones de USGS se resuelven mediante <code className="text-[#d5c4fb] bg-[#241c19] px-1 py-0.5 rounded">ON CONFLICT (id) DO UPDATE</code>, manteniendo una única fuente de verdad en <code className="text-[#86efac] bg-[#241c19] px-1 py-0.5 rounded">curated.earthquakes_curated</code>.
+              <strong className="text-[#ececf1]">Idempotencia en Serving Layer &bull; ADR 0007:</strong> Las actualizaciones de USGS se resuelven mediante <code className="text-[#d5c4fb] bg-[#241c19] px-1 py-0.5 rounded">ON CONFLICT (id) DO UPDATE</code>, manteniendo una única fuente de verdad en <code className="text-[#86efac] bg-[#241c19] px-1 py-0.5 rounded">curated.earthquakes_curated</code>.
             </li>
             <li>
-              <strong className="text-[#ececf1]">Protocolo Gráfico Declarativo (ADR 0008):</strong> El asistente SismoBot entrega especificaciones JSON estructuradas `{'{ type, labels, datasets }'}` que el frontend renderiza en SVG nativo, garantizando 0% de fallas en cliente y 100% de seguridad OWASP.
+              <strong className="text-[#ececf1]">Protocolo Gráfico Declarativo &bull; ADR 0008:</strong> El asistente SismoBot entrega especificaciones JSON estructuradas `{'{ type, labels, datasets }'}` que el frontend renderiza en SVG nativo, garantizando 0% de fallas en cliente y 100% de seguridad OWASP.
             </li>
           </ul>
         </div>

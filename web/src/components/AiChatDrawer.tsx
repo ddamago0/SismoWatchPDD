@@ -824,7 +824,7 @@ export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({ isOpen, onClose }) =
                           <div className="mt-1.5 p-2 bg-[#100d0c] rounded-lg border border-[#241c19]">
                             <div className="flex items-center justify-between text-[9px] font-mono text-[#9b9baa] mb-1">
                               <span className="text-[#86efac] font-medium">PostgreSQL 16 &bull; Solo Lectura</span>
-                              <span>{msg.row_count} fila(s)</span>
+                              <span>{msg.row_count} filas</span>
                             </div>
                             <pre className="text-[10px] font-mono text-[#86efac] overflow-x-auto whitespace-pre-wrap leading-relaxed">
                               {msg.executed_sql}

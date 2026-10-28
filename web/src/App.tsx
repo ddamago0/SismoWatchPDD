@@ -186,7 +186,7 @@ const MainApp: React.FC = () => {
                     }`}
                   >
                     <Globe2 className="w-3.5 h-3.5" />
-                    <span>Globo 3D Táctico (WebGL)</span>
+                    <span>Modelo 3D</span>
                   </button>
                   <button
                     onClick={() => setCartographyMode('2d')}
@@ -197,13 +197,13 @@ const MainApp: React.FC = () => {
                     }`}
                   >
                     <Map className="w-3.5 h-3.5" />
-                    <span>Mapa 2D (Satélite Esri)</span>
+                    <span>Modelo 2D</span>
                   </button>
                 </div>
               </div>
 
               <div className="text-[11px] font-mono text-[#9b9baa]">
-                Capa Curated &bull; {events.length} Eventos (24h)
+                Capa Curated &bull; {events.length} Eventos &bull; 24h
               </div>
             </div>
 
