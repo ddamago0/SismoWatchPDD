@@ -22,13 +22,17 @@ interface AnalyticsChartsProps {
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-[#171211] border border-[#332b27] p-2.5 rounded-xl shadow-2xl text-xs font-mono">
-        <p className="font-semibold text-[#f7f7f9] mb-1">{label}</p>
-        {payload.map((entry: any, index: number) => (
-          <p key={index} style={{ color: entry.color }} className="font-medium">
-            {entry.name}: {entry.value}
-          </p>
-        ))}
+      <div className="bg-[#171211]/95 backdrop-blur-md border border-[#332b27] p-2.5 rounded-xl shadow-2xl text-xs font-mono">
+        <p className="font-semibold text-[#f7f7f9] mb-1.5">{label}</p>
+        {payload.map((entry: any, index: number) => {
+          const color = entry.color || entry.payload?.fill || '#d5c4fb';
+          return (
+            <p key={index} style={{ color }} className="font-medium flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
+              <span>{entry.name}: {entry.value}</span>
+            </p>
+          );
+        })}
       </div>
     );
   }
@@ -94,7 +98,10 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ stats, loading
                   tickFormatter={(val) => val.slice(-5)}
                 />
                 <YAxis stroke="#9b9baa" fontSize={10} allowDecimals={false} />
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip
+                  content={<CustomTooltip />}
+                  cursor={{ stroke: '#844dea', strokeWidth: 1.5, strokeDasharray: '3 3' }}
+                />
                 <Area
                   type="monotone"
                   dataKey="count"
@@ -134,7 +141,10 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ stats, loading
                 <CartesianGrid strokeDasharray="3 3" stroke="#261f1c" />
                 <XAxis dataKey="bucket" stroke="#9b9baa" fontSize={10} />
                 <YAxis stroke="#9b9baa" fontSize={10} allowDecimals={false} />
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip
+                  content={<CustomTooltip />}
+                  cursor={{ fill: 'rgba(255, 255, 255, 0.05)', radius: 6 }}
+                />
                 <Bar dataKey="count" name="Sismos" radius={[6, 6, 0, 0]}>
                   {magnitudeData.map((entry, index) => (
                     <Cell
