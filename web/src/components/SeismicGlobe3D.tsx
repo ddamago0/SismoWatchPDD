@@ -198,7 +198,23 @@ export const SeismicGlobe3D: React.FC<SeismicGlobe3DProps> = ({
   const [showPlates, setShowPlates] = useState<boolean>(true);
   const [showHubs, setShowHubs] = useState<boolean>(true);
   const [showLegend, setShowLegend] = useState<boolean>(false);
+  const [showFlightDropdown, setShowFlightDropdown] = useState<boolean>(false);
+  const [selectedPresetId, setSelectedPresetId] = useState<string>('global');
   const [platesGeoJson, setPlatesGeoJson] = useState<any>(null);
+
+  // Cerrar dropdown de vuelo al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('#flight-dropdown-container')) {
+        setShowFlightDropdown(false);
+      }
+    };
+    if (showFlightDropdown) {
+      document.addEventListener('click', handleClickOutside);
+    }
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [showFlightDropdown]);
 
   // Evaluación de impacto sísmico en Hubs Logísticos de SuperApp
   const computedHubs = useMemo(() => {
@@ -513,90 +529,115 @@ export const SeismicGlobe3D: React.FC<SeismicGlobe3DProps> = ({
         }}
       />
 
-      {/* Cockpit HUD: Controles Superiores y Presets de Vuelo */}
-      <div className="absolute top-4 left-4 right-4 z-20 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
-        {/* Herramientas de visualización */}
-        <div className="flex flex-wrap items-center gap-2 pointer-events-auto">
-          <button
-            onClick={() => setIsRotating(!isRotating)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border backdrop-blur text-xs font-medium shadow-lg transition-colors cursor-pointer ${
-              isRotating
-                ? 'bg-sky-500/20 text-sky-300 border-sky-500/30'
-                : 'bg-slate-900/80 text-slate-400 border-slate-700/80 hover:text-white'
-            }`}
-            title="Alternar rotación automática"
-          >
-            <Compass className={`w-3.5 h-3.5 ${isRotating ? 'animate-spin' : ''}`} />
-            <span>{isRotating ? 'Auto-Rotación: ON' : 'Auto-Rotación: OFF'}</span>
-          </button>
-
-          <button
-            onClick={() => setShowPlates(!showPlates)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border backdrop-blur text-xs font-medium shadow-lg transition-colors cursor-pointer ${
-              showPlates
-                ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
-                : 'bg-slate-900/80 text-slate-400 border-slate-700/80 hover:text-white'
-            }`}
-            title="Alternar visualización de fallas y placas tectónicas (PB2002)"
-          >
-            <Layers className="w-3.5 h-3.5" />
-            <span>{showPlates ? 'Placas: ON' : 'Placas: OFF'}</span>
-          </button>
-
-          <button
-            onClick={() => setShowHubs(!showHubs)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border backdrop-blur text-xs font-medium shadow-lg transition-colors cursor-pointer ${
-              showHubs
-                ? alertHubsCount > 0
-                  ? 'bg-rose-500/20 text-rose-300 border-rose-500/40 animate-pulse'
-                  : 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'
-                : 'bg-slate-900/80 text-slate-400 border-slate-700/80 hover:text-white'
-            }`}
-            title="Alternar visualización de centros logísticos y dark stores de SuperApp"
-          >
-            <Building2 className="w-3.5 h-3.5" />
-            <span>{showHubs ? `Hubs: ON (${computedHubs.length})` : 'Hubs: OFF'}</span>
-          </button>
-
-          <button
-            onClick={() => setShowBeacons(!showBeacons)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border backdrop-blur text-xs font-medium shadow-lg transition-colors cursor-pointer ${
-              showBeacons
-                ? 'bg-purple-500/20 text-purple-300 border-purple-500/30'
-                : 'bg-slate-900/80 text-slate-400 border-slate-700/80 hover:text-white'
-            }`}
-            title="Alternar balizas láser verticales 3D"
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>{showBeacons ? 'Balizas: ON' : 'Balizas: OFF'}</span>
-          </button>
-
-          <button
-            onClick={resetView}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-700/80 bg-slate-900/80 hover:bg-slate-800 text-slate-300 text-xs font-medium shadow-lg transition-colors cursor-pointer"
-            title="Restablecer posición inicial de la cámara"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            <span>Reset</span>
-          </button>
-        </div>
-
-        {/* Presets de Vuelo de Cámara Orbital */}
-        <div className="flex items-center gap-1 bg-slate-900/90 backdrop-blur border border-slate-800 rounded-lg p-1 text-[11px] shadow-lg pointer-events-auto overflow-x-auto max-w-full">
-          <span className="text-slate-400 font-mono px-1.5 flex items-center gap-1 text-[10px]">
-            <Navigation className="w-3 h-3 text-cyan-400" />
-            <span className="hidden sm:inline">Vuelo:</span>
-          </span>
-          {REGIONAL_PRESETS.map((p) => (
+      {/* Cockpit HUD: Controles Superiores Compactos (Solo Iconos + Desplegable de Vuelo) */}
+      <div className="absolute top-3 left-3 right-3 z-20 flex items-center justify-between pointer-events-none">
+        {/* Controles y Vuelo en fila única */}
+        <div className="flex items-center gap-2 pointer-events-auto">
+          {/* Grupo de Iconos de Herramientas */}
+          <div className="flex items-center gap-1 bg-slate-900/90 backdrop-blur-md p-1 rounded-xl border border-slate-800 shadow-xl">
             <button
-              key={p.id}
-              onClick={() => flyToRegion(p)}
-              className="px-2 py-1 rounded hover:bg-slate-800 text-slate-300 hover:text-cyan-300 transition-colors whitespace-nowrap cursor-pointer font-medium text-[11px]"
-              title={`Volar cámara 3D a ${p.name}`}
+              onClick={() => setIsRotating(!isRotating)}
+              className={`p-2 rounded-lg border backdrop-blur text-xs transition-all cursor-pointer ${
+                isRotating
+                  ? 'bg-sky-500/20 text-sky-300 border-sky-500/40 shadow-xs shadow-sky-500/20'
+                  : 'bg-slate-900/60 text-slate-400 border-transparent hover:text-white hover:bg-slate-800'
+              }`}
+              title={`Auto-Rotación: ${isRotating ? 'Activada' : 'Desactivada'}`}
             >
-              {p.name}
+              <Compass className={`w-3.5 h-3.5 ${isRotating ? 'animate-spin' : ''}`} />
             </button>
-          ))}
+
+            <button
+              onClick={() => setShowPlates(!showPlates)}
+              className={`p-2 rounded-lg border backdrop-blur text-xs transition-all cursor-pointer ${
+                showPlates
+                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-xs shadow-amber-500/20'
+                  : 'bg-slate-900/60 text-slate-400 border-transparent hover:text-white hover:bg-slate-800'
+              }`}
+              title={`Fallas y Placas Tectónicas (PB2002): ${showPlates ? 'Visibles' : 'Ocultas'}`}
+            >
+              <Layers className="w-3.5 h-3.5" />
+            </button>
+
+            <button
+              onClick={() => setShowHubs(!showHubs)}
+              className={`p-2 rounded-lg border backdrop-blur text-xs transition-all cursor-pointer ${
+                showHubs
+                  ? alertHubsCount > 0
+                    ? 'bg-rose-500/20 text-rose-300 border-rose-500/40 animate-pulse'
+                    : 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 shadow-xs shadow-cyan-500/20'
+                  : 'bg-slate-900/60 text-slate-400 border-transparent hover:text-white hover:bg-slate-800'
+              }`}
+              title={`Hubs SuperApp (10 Dark Stores): ${showHubs ? 'Visibles' : 'Ocultos'}`}
+            >
+              <Building2 className="w-3.5 h-3.5" />
+            </button>
+
+            <button
+              onClick={() => setShowBeacons(!showBeacons)}
+              className={`p-2 rounded-lg border backdrop-blur text-xs transition-all cursor-pointer ${
+                showBeacons
+                  ? 'bg-purple-500/20 text-purple-300 border-purple-500/40 shadow-xs shadow-purple-500/20'
+                  : 'bg-slate-900/60 text-slate-400 border-transparent hover:text-white hover:bg-slate-800'
+              }`}
+              title={`Balizas Láser 3D: ${showBeacons ? 'Activadas' : 'Desactivadas'}`}
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+            </button>
+
+            <div className="w-px h-4 bg-slate-800 mx-0.5" />
+
+            <button
+              onClick={resetView}
+              className="p-2 rounded-lg border border-transparent hover:border-slate-700 bg-slate-900/60 hover:bg-slate-800 text-slate-400 hover:text-white text-xs transition-all cursor-pointer"
+              title="Restablecer posición inicial de la cámara"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* Menú Desplegable de Vuelo Orbital */}
+          <div id="flight-dropdown-container" className="relative">
+            <button
+              onClick={() => setShowFlightDropdown(!showFlightDropdown)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border backdrop-blur-md text-xs font-mono font-medium shadow-xl transition-all cursor-pointer ${
+                showFlightDropdown
+                  ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40'
+                  : 'bg-slate-900/90 text-slate-300 border-slate-800 hover:border-slate-700 hover:bg-slate-800 hover:text-white'
+              }`}
+              title="Seleccionar preset de vuelo orbital"
+            >
+              <Navigation className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Vuelo: {REGIONAL_PRESETS.find((p) => p.id === selectedPresetId)?.name || 'Global'}</span>
+              <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform ${showFlightDropdown ? 'rotate-180 text-cyan-400' : ''}`} />
+            </button>
+
+            {showFlightDropdown && (
+              <div className="absolute top-full left-0 mt-1.5 w-44 bg-slate-900/95 backdrop-blur-md border border-slate-700/80 rounded-xl p-1 shadow-2xl z-30 font-mono text-xs space-y-0.5 animate-in fade-in slide-in-from-top-1 duration-150">
+                {REGIONAL_PRESETS.map((p) => {
+                  const isSelected = p.id === selectedPresetId;
+                  return (
+                    <button
+                      key={p.id}
+                      onClick={() => {
+                        setSelectedPresetId(p.id);
+                        flyToRegion(p);
+                        setShowFlightDropdown(false);
+                      }}
+                      className={`w-full text-left px-2.5 py-1.5 rounded-lg transition-colors flex items-center justify-between cursor-pointer ${
+                        isSelected
+                          ? 'bg-cyan-500/20 text-cyan-300 font-semibold'
+                          : 'text-slate-300 hover:text-white hover:bg-slate-800/80'
+                      }`}
+                    >
+                      <span>{p.name}</span>
+                      {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
