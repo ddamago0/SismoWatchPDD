@@ -52,6 +52,36 @@ const MainApp: React.FC = () => {
     return computeHubImpacts(events).filter((h) => h.status !== 'OPERATIVO').length;
   }, [events]);
 
+  // Floating SismoBot bubble visibility state (auto-peek + hover)
+  const [isBotHovered, setIsBotHovered] = useState(false);
+  const [isBotPeekActive, setIsBotPeekActive] = useState(false);
+
+  useEffect(() => {
+    // Primer vistazo sutil a los 3.5 segundos para informar de la presencia de SismoBot
+    const initialTimer = setTimeout(() => {
+      setIsBotPeekActive(true);
+      const hideTimer = setTimeout(() => {
+        setIsBotPeekActive(false);
+      }, 3500);
+      return () => clearTimeout(hideTimer);
+    }, 3500);
+
+    // Animación periódica cada 35 segundos que asoma el tooltip durante 3.5s y se oculta
+    const interval = setInterval(() => {
+      setIsBotPeekActive(true);
+      setTimeout(() => {
+        setIsBotPeekActive(false);
+      }, 3500);
+    }, 35000);
+
+    return () => {
+      clearTimeout(initialTimer);
+      clearInterval(interval);
+    };
+  }, []);
+
+  const showBotBubble = isBotHovered || isBotPeekActive;
+
   // Strict RBAC Navigation Guard: Viewer must NEVER stay on admin_audit
   useEffect(() => {
     if (activeTab === 'admin_audit' && !isAdmin) {
@@ -278,24 +308,38 @@ const MainApp: React.FC = () => {
         )}
       </main>
 
-      {/* Floating Action Button Bubble (Pregúntale a SismoBot) */}
+      {/* Floating Action Button & Animated SismoBot Bubble */}
       {!isAiDrawerOpen && (
-        <div className="fixed bottom-6 right-6 z-40 flex items-center gap-3 animate-in fade-in duration-200">
-          <button
-            onClick={() => setIsAiDrawerOpen(true)}
-            className="hidden sm:flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#1a1413]/95 backdrop-blur-md border border-[#2d2421] text-xs font-semibold text-[#ececf1] shadow-xl hover:shadow-2xl hover:border-[#844dea]/60 hover:text-[#d5c4fb] transition-all cursor-pointer group"
+        <div
+          className="fixed bottom-6 right-6 z-40 flex items-center gap-2 group"
+          onMouseEnter={() => setIsBotHovered(true)}
+          onMouseLeave={() => setIsBotHovered(false)}
+        >
+          {/* Animated Tooltip Bubble: emerge al pasar el cursor o periódicamente */}
+          <div
+            className={`hidden sm:flex items-center transition-all duration-300 ease-out transform ${
+              showBotBubble
+                ? 'opacity-100 translate-x-0 scale-100 pointer-events-auto'
+                : 'opacity-0 translate-x-4 scale-95 pointer-events-none'
+            }`}
           >
-            <Sparkles className="w-3.5 h-3.5 text-[#844dea] group-hover:rotate-12 transition-transform" />
-            <span>Pregúntale a SismoBot</span>
-          </button>
+            <button
+              onClick={() => setIsAiDrawerOpen(true)}
+              className="relative flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#1a1413]/95 backdrop-blur-md border border-[#2d2421] text-xs font-semibold text-[#ececf1] shadow-2xl hover:shadow-[#844dea]/20 hover:border-[#844dea]/60 hover:text-[#d5c4fb] transition-all cursor-pointer group/pill"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-[#844dea] group-hover/pill:rotate-12 transition-transform" />
+              <span>Pregúntale a SismoBot</span>
+              <div className="absolute -right-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-[#1a1413] border-t border-r border-[#2d2421] rotate-45" />
+            </button>
+          </div>
 
           <button
             onClick={() => setIsAiDrawerOpen(true)}
             aria-label="Abrir asistente SismoBot"
-            className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-xl bg-gradient-to-tr from-[#6b35d6] via-[#844dea] to-[#a855f7] text-white shadow-[#844dea]/30 hover:shadow-[#844dea]/50 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer border border-[#c084fc]/30 group"
+            className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-xl bg-gradient-to-tr from-[#6b35d6] via-[#844dea] to-[#a855f7] text-white shadow-[#844dea]/30 hover:shadow-[#844dea]/50 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer border border-[#c084fc]/30 group/btn"
           >
             <div className="relative">
-              <Bot className="w-6 h-6 group-hover:scale-110 transition-transform" />
+              <Bot className="w-6 h-6 group-hover/btn:scale-110 transition-transform" />
               <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-[#86efac] border-2 border-[#120e0d] animate-pulse" />
             </div>
           </button>
