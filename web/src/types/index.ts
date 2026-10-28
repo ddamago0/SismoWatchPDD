@@ -118,6 +118,9 @@ export interface SqlQueryResult {
   row_count?: number;
   provider_used?: string;
   status?: string;
+  latency_ms?: number;
+  suggested_questions?: string[];
+  context_used?: any;
 }
 
 export interface SeismicAnomaly {

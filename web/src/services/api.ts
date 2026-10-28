@@ -148,16 +148,28 @@ export const api = {
     return request<QuarantineRecord[]>('/api/quality/quarantine');
   },
 
-  async runNaturalQuery(query: string): Promise<SqlQueryResult> {
+  async runNaturalQuery(
+    query: string,
+    history?: Array<{ role: string; content: string }>
+  ): Promise<SqlQueryResult> {
     return request<SqlQueryResult>('/api/ai/query', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        message: query,
         question: query,
         query,
         sql_query: query,
+        history,
       }),
     });
+  },
+
+  async queryAi(
+    query: string,
+    history?: Array<{ role: string; content: string }>
+  ): Promise<SqlQueryResult> {
+    return this.runNaturalQuery(query, history);
   },
 
   async getLineage(): Promise<any> {

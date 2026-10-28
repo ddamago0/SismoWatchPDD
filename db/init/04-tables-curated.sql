@@ -139,3 +139,23 @@ CREATE TABLE IF NOT EXISTS curated.users (
 );
 
 CREATE INDEX IF NOT EXISTS idx_users_username ON curated.users(username);
+
+-- 8. Anomalías y enjambres sísmicos (Z-Score y agrupamiento geodésico)
+CREATE TABLE IF NOT EXISTS curated.seismic_anomalies (
+    id SERIAL PRIMARY KEY,
+    anomaly_type VARCHAR(50) NOT NULL DEFAULT 'SEISMIC_SWARM_EVENT',
+    region TEXT NOT NULL,
+    event_id VARCHAR(64),
+    cluster_size INT DEFAULT 1,
+    latitude DOUBLE PRECISION,
+    longitude DOUBLE PRECISION,
+    radius_km DOUBLE PRECISION,
+    z_score DOUBLE PRECISION,
+    max_magnitude DOUBLE PRECISION,
+    severity VARCHAR(20) DEFAULT 'WARNING',
+    explanation TEXT,
+    detected_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_anomalies_detected ON curated.seismic_anomalies(detected_at DESC);
+
